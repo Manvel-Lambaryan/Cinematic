@@ -10,6 +10,8 @@ import {
   SparklesIcon,
   VideoCameraIcon,
   TicketIcon,
+  CalendarIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 
@@ -22,6 +24,8 @@ export const AddMovie = () => {
     rating: "",
     cinemaId: "",
     price: "",
+    releaseDate: "",
+    showTime: "",
   });
 
   const [cinemas, setCinemas] = useState<any[]>([]);
@@ -39,7 +43,6 @@ export const AddMovie = () => {
       setIsCinemasLoading(true);
       try {
         const res = await Axios.get("/cinema");
-        // Քո Backend-ը օգտագործում է ApiResponse wrapper, ուստի ստուգում ենք res.data.data
         const actualData = res.data.data || res.data;
         setCinemas(Array.isArray(actualData) ? actualData : []);
       } catch (err) {
@@ -67,7 +70,6 @@ export const AddMovie = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Ստուգում ենք Cinema-ն
     if (!formData.cinemaId || formData.cinemaId === "") {
       return alert(t("please_select_cinema_hall"));
     }
@@ -75,19 +77,20 @@ export const AddMovie = () => {
     setIsSubmitting(true);
     const data = new FormData();
 
-    // Հիմնական տվյալներ
     data.append("title", formData.title);
     data.append("description", formData.description);
     data.append("genre", formData.genre);
     data.append("rating", formData.rating || "0");
     data.append("price", formData.price || "0");
-    data.append("cinema", formData.cinemaId); // Schema-ն սպասում է 'cinema' բանալին
+    data.append("cinema", formData.cinemaId);
 
-    // ՊԱՐՏԱԴԻՐ ԴԱՇՏԵՐ (Schema-ն պահանջում է releaseDate և duration)
-    data.append("releaseDate", new Date().toISOString());
-    data.append("duration", "120"); // Լռելյայն 2 ժամ
+    const releaseDateTime = formData.releaseDate && formData.showTime 
+      ? new Date(`${formData.releaseDate}T${formData.showTime}`)
+      : new Date();
+    data.append("releaseDate", releaseDateTime.toISOString());
+    data.append("showTime", formData.showTime || "00:00");
+    data.append("duration", "120");
 
-    // Ֆայլեր
     if (files.poster) data.append("posterUrl", files.poster);
     if (files.banner) data.append("imageUrl", files.banner);
     if (files.video) data.append("videoUrl", files.video);
@@ -97,7 +100,6 @@ export const AddMovie = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       alert(t("movie_published_success"));
-      // Reset form if needed
     } catch (err: any) {
       console.error(t("upload_error"), err.response?.data || err);
       alert(err.response?.data?.message || t("upload_failed_check_console"));
@@ -194,7 +196,7 @@ export const AddMovie = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-8">
                   <FloatingInput
                     label={t("primary_genre")}
                     placeholder={t("scifi_adventure")}
@@ -221,6 +223,119 @@ export const AddMovie = () => {
                       setFormData({ ...formData, price: val })
                     }
                   />
+                </div>
+
+                {/* Date and Time Section - Modern Glass Style */}
+                <div className="space-y-8">
+                  <SectionHeader title="Schedule" step="03" />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Release Date Picker */}
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-2xl opacity-20 blur-xl" />
+                      <div className="relative bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-8 shadow-2xl">
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                              <CalendarIcon className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Release Date</h3>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">When does it premiere?</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type="date"
+                            value={formData.releaseDate}
+                            onChange={(e) =>
+                              setFormData({ ...formData, releaseDate: e.target.value })
+                            }
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                            min={new Date().toISOString().split('T')[0]}
+                          />
+                          {formData.releaseDate && (
+                            <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                              <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                                🎬 {new Date(formData.releaseDate).toLocaleDateString('en-US', { 
+                                  weekday: 'long', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Show Time Picker */}
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 rounded-2xl opacity-20 blur-xl" />
+                      <div className="relative bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-8 shadow-2xl">
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                              <ClockIcon className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Show Time</h3>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">When does it start?</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type="time"
+                            value={formData.showTime}
+                            onChange={(e) =>
+                              setFormData({ ...formData, showTime: e.target.value })
+                            }
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          />
+                          {formData.showTime && (
+                            <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                              <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                                🎭 {formData.showTime} • {parseInt(formData.showTime.split(':')[0]) < 12 ? 'Morning Show' : parseInt(formData.showTime.split(':')[0]) < 18 ? 'Matinee' : 'Evening Show'}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Combined Schedule Display */}
+                  {formData.releaseDate && formData.showTime && (
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 rounded-2xl opacity-20 blur-xl" />
+                      <div className="relative bg-white/90 dark:bg-black/90 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-8 shadow-2xl">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Scheduled Successfully!</h3>
+                              <p className="text-gray-600 dark:text-gray-400">
+                                {new Date(formData.releaseDate).toLocaleDateString('en-US', { 
+                                  weekday: 'short', 
+                                  month: 'short', 
+                                  day: 'numeric' 
+                                })} at {formData.showTime}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-green-600 dark:text-green-400">Ready to premiere</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Cinema management</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

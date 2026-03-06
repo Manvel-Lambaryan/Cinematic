@@ -18,6 +18,7 @@ import {
   LanguageIcon,
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
+  CalendarIcon,
 } from "@heroicons/react/24/outline";
 import { Axios } from "../config/axios";
 import { Search } from "./menu/movie/Search";
@@ -255,6 +256,12 @@ export const CinemaLayout = () => {
               icon={<FilmIcon className="w-6 h-6" />}
               label={t("movies")}
               active={location.pathname === "/movies"}
+            />
+            <TopNavLink
+              to="/calendar"
+              icon={<CalendarIcon className="w-6 h-6" />}
+              label="Schedule"
+              active={location.pathname === "/calendar"}
             />
             <TopNavLink
               to="/profile/payments"

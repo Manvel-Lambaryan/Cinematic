@@ -9,7 +9,9 @@ export interface IMovie {
   rating: number;
   
   cinema: string; 
-  price: number
+  price: number;
+  releaseDate: string;
+  showTime?: string;
 }
 
 export interface IUser {

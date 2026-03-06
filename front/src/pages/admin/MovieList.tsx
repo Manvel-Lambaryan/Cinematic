@@ -14,6 +14,8 @@ import {
   Layers,
   Video,
   LayoutGrid, // Նոր icon դահլիճի համար
+  Calendar,
+  Clock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { API_URL } from "../../config/axios";
@@ -166,6 +168,16 @@ const MovieList = () => {
                       <span className="text-[10px] text-zinc-400 uppercase font-bold flex items-center gap-1">
                         <DollarSign size={12} /> {movie.price} AMD
                       </span>
+                      {movie.releaseDate && (
+                        <span className="text-[10px] text-purple-400 uppercase font-bold flex items-center gap-1">
+                          <Calendar size={12} /> {new Date(movie.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      )}
+                      {movie.showTime && (
+                        <span className="text-[10px] text-blue-400 uppercase font-bold flex items-center gap-1">
+                          <Clock size={12} /> {movie.showTime}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -375,6 +387,42 @@ const MovieList = () => {
                             })
                           }
                           className="w-full bg-zinc-100 dark:bg-white/5 p-4 rounded-2xl text-sm outline-none border border-transparent focus:border-red-600/50 transition-all font-bold text-green-600"
+                        />
+                      </div>
+
+                      {/* Release Date Field */}
+                      <div className="space-y-4">
+                        <label className="text-[10px] uppercase font-black text-zinc-400 tracking-widest ml-2 flex items-center gap-2">
+                          <Calendar size={12} /> Release Date
+                        </label>
+                        <input
+                          type="date"
+                          value={editingMovie.releaseDate ? new Date(editingMovie.releaseDate).toISOString().split('T')[0] : ''}
+                          onChange={(e) =>
+                            setEditingMovie({
+                              ...editingMovie,
+                              releaseDate: new Date(e.target.value).toISOString(),
+                            })
+                          }
+                          className="w-full bg-zinc-100 dark:bg-white/5 p-4 rounded-2xl text-sm outline-none border border-transparent focus:border-red-600/50 transition-all font-bold text-purple-600"
+                        />
+                      </div>
+
+                      {/* Show Time Field */}
+                      <div className="space-y-4">
+                        <label className="text-[10px] uppercase font-black text-zinc-400 tracking-widest ml-2 flex items-center gap-2">
+                          <Clock size={12} /> Show Time
+                        </label>
+                        <input
+                          type="time"
+                          value={editingMovie.showTime || ''}
+                          onChange={(e) =>
+                            setEditingMovie({
+                              ...editingMovie,
+                              showTime: e.target.value,
+                            })
+                          }
+                          className="w-full bg-zinc-100 dark:bg-white/5 p-4 rounded-2xl text-sm outline-none border border-transparent focus:border-red-600/50 transition-all font-bold text-blue-600"
                         />
                       </div>
                     </div>

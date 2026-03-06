@@ -15,6 +15,7 @@ import { AddCinema } from "../pages/admin/AddCinema";
 import { Booking } from "../pages/menu/movie/Booking";
 import  PaymentHistory  from "../pages/menu/movie/Payment";
 import { TicketManagement } from "../pages/admin/TicketManagement";
+import MovieCalendar from "../pages/admin/MovieCalendar";
 
 const ProtectedRoute = () => {
   const token = localStorage.getItem("accessToken");
@@ -52,6 +53,10 @@ export const routes = [
           {
             path: "movies",
             element: <Discover />,
+          },
+          {
+            path: "calendar",
+            element: <MovieCalendar />,
           },
           {
             path: "profile/payments",  
