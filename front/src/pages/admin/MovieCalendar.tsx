@@ -8,6 +8,10 @@ import {
   ClockIcon,
   MapPinIcon,
   TicketIcon,
+  XMarkIcon,
+  FilmIcon,
+  StarIcon,
+  CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 import { API_URL } from "../../config/axios";
 
@@ -23,6 +27,8 @@ interface Movie {
   posterUrl?: string;
   imageUrl?: string;
   price: number;
+  description?: string;
+  rating?: number;
 }
 
 interface Cinema {
@@ -35,6 +41,8 @@ const MovieCalendar = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -114,6 +122,11 @@ const MovieCalendar = () => {
     const cleanPath = path.replace("/not/", "/");
     const finalPath = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
     return `${API_URL}${finalPath}`;
+  };
+
+  const handleMovieClick = (movie: Movie) => {
+    setSelectedMovie(movie);
+    setIsModalOpen(true);
   };
 
   const monthYear = currentDate.toLocaleDateString('en-US', { 
@@ -221,7 +234,8 @@ const MovieCalendar = () => {
                     dayMovies.slice(0, 1).map((movie) => (
                       <div
                         key={movie._id}
-                        className="relative w-full h-full"
+                        className="relative w-full h-full cursor-pointer"
+                        onClick={() => handleMovieClick(movie)}
                       >
                         <img
                           src={getImageUrl(movie.posterUrl || movie.imageUrl || '')}
@@ -274,6 +288,154 @@ const MovieCalendar = () => {
           </div>
         </div>
       </div>
+
+      {/* Movie Details Modal */}
+      <AnimatePresence>
+        {isModalOpen && selectedMovie && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="fixed inset-0 bg-zinc-950/90 backdrop-blur-md"
+              style={{ zIndex: 9999 }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-0 flex items-center justify-center p-4"
+              style={{ zIndex: 10000 }}
+            >
+              <div className="w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-[40px] shadow-2xl border border-zinc-200 dark:border-white/10 overflow-hidden">
+                <div className="p-8 md:p-10 max-h-[90vh] overflow-y-auto">
+                  <div className="flex justify-between items-center mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-red-600 rounded-2xl text-white shadow-lg shadow-red-600/30">
+                        <CalendarIcon className="w-6 h-6" />
+                      </div>
+                      <h2 className="text-3xl font-black italic uppercase tracking-tighter dark:text-white">
+                        Film <span className="text-red-600">Details</span>
+                      </h2>
+                    </div>
+                    <button
+                      onClick={() => setIsModalOpen(false)}
+                      className="p-2 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-full dark:text-zinc-400"
+                    >
+                      <XMarkIcon className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {/* Movie Poster */}
+                    <div className="flex flex-col gap-6">
+                      <img
+                        src={getImageUrl(selectedMovie.posterUrl || selectedMovie.imageUrl || '')}
+                        alt={selectedMovie.title}
+                        className="w-full h-80 object-cover rounded-3xl shadow-2xl border dark:border-white/10"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder-movie.jpg';
+                        }}
+                      />
+                    </div>
+
+                    {/* Movie Information */}
+                    <div className="md:col-span-2 space-y-6">
+                      <div>
+                        <h3 className="text-2xl font-black mb-2 dark:text-white">
+                          {selectedMovie.title}
+                        </h3>
+                        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                          {selectedMovie.description}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-[10px] uppercase font-black text-zinc-400 tracking-widest ml-2 flex items-center gap-2">
+                              <FilmIcon className="w-4 h-4" /> Genre
+                            </label>
+                            <div className="text-lg font-bold text-zinc-900 dark:text-white">
+                              {selectedMovie.genre}
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] uppercase font-black text-zinc-400 tracking-widest ml-2 flex items-center gap-2">
+                              <StarIcon className="w-4 h-4" /> Rating
+                            </label>
+                            <div className="text-lg font-bold text-red-600">
+                              {selectedMovie.rating} / 10
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-[10px] uppercase font-black text-zinc-400 tracking-widest ml-2 flex items-center gap-2">
+                              <MapPinIcon className="w-4 h-4" /> Cinema Room
+                            </label>
+                            <div className="text-lg font-bold text-zinc-900 dark:text-white">
+                              {selectedMovie.cinemaName || `Hall ${selectedMovie.cinemaNumbering}`}
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] uppercase font-black text-zinc-400 tracking-widest ml-2 flex items-center gap-2">
+                              <CurrencyDollarIcon className="w-4 h-4" /> Ticket Price
+                            </label>
+                            <div className="text-lg font-bold text-green-600">
+                              {selectedMovie.price} AMD
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Date and Time */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="text-[10px] uppercase font-black text-zinc-400 tracking-widest ml-2 flex items-center gap-2">
+                            <CalendarIcon className="w-4 h-4" /> Release Date
+                          </label>
+                          <div className="text-lg font-bold text-purple-600">
+                            {selectedMovie.releaseDate ? new Date(selectedMovie.releaseDate).toLocaleDateString('en-US', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            }) : 'Not set'}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase font-black text-zinc-400 tracking-widest ml-2 flex items-center gap-2">
+                            <ClockIcon className="w-4 h-4" /> Show Time
+                          </label>
+                          <div className="text-lg font-bold text-blue-600">
+                            {selectedMovie.showTime || 'Not set'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-8 border-t dark:border-white/5 flex gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="flex-1 bg-zinc-100 dark:bg-white/5 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[2px] dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/10 transition-all"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
