@@ -38,6 +38,9 @@ const movieSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    showTime: {
+      type: String, // Store time as "14:30" format
+    },
     price: {
       type: Number,
       required: true,

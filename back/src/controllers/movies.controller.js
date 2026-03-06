@@ -26,6 +26,7 @@ const addMovie = asyncHandler(async (req, res) => {
     rating,
     duration,
     releaseDate,
+    showTime,
     price,
   } = req.body;
 
@@ -36,6 +37,7 @@ const addMovie = asyncHandler(async (req, res) => {
     genre,
     rating: rating || 0,
     releaseDate: releaseDate || new Date(),
+    showTime: showTime || "00:00", // Default time if not provided
     duration: duration || 120,
     price: price || 0,
     posterUrl: req.files["posterUrl"]
