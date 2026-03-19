@@ -307,7 +307,7 @@ export const CinemaLayout = () => {
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 relative overflow-hidden rounded-[48px] border border-zinc-200 dark:border-white/5 bg-white/50 dark:bg-white/[0.01] shadow-inner">
+      <main className="flex-1 min-h-0 relative overflow-hidden bg-white/50 dark:bg-white/[0.01]">
         <div className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 pb-6">
           <Outlet />
           <section className="mt-16" aria-label="Footer">

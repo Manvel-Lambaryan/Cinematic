@@ -75,10 +75,10 @@ export const Movie = () => {
   if (!movie) return null;
 
   return (
-    <div className="h-full min-h-screen w-full bg-white dark:bg-[#020617] text-zinc-900 dark:text-white relative overflow-hidden transition-colors duration-500 rounded-[48px]">
+    <div className="h-full min-h-screen w-full bg-white dark:bg-[#020617] text-zinc-900 dark:text-white relative overflow-hidden transition-colors duration-500">
 
       {/* BACKGROUND — same curvature as container */}
-      <div className="absolute inset-0 z-0 rounded-[48px] overflow-hidden">
+      <div className="absolute inset-0 z-0 overflow-hidden">
         <motion.img
           initial={{ scale: 1.2, opacity: 0 }}
           animate={{ scale: 1, opacity: 0.5 }}
@@ -87,8 +87,8 @@ export const Movie = () => {
           className="w-full h-full object-cover"
           alt="background"
         />
-        <div className="absolute inset-0 rounded-[48px] bg-gradient-to-r from-white via-white/80 to-transparent dark:from-[#020617] dark:via-[#020617]/70 dark:to-transparent" />
-        <div className="absolute inset-0 rounded-[48px] bg-gradient-to-t from-white via-transparent to-transparent dark:from-[#020617] dark:via-transparent dark:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-[#020617] dark:via-[#020617]/70 dark:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent dark:from-[#020617] dark:via-transparent dark:to-transparent" />
       </div>
 
       {/* BACK BUTTON */}
