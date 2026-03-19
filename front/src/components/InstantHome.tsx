@@ -106,7 +106,7 @@ const InstantHome = memo(() => {
 
   // Instant UI rendering with skeleton fallbacks
   return (
-    <div className="min-h-full w-full flex flex-col gap-10 pb-20 px-2 transition-colors duration-700 bg-white dark:bg-[var(--background)]">
+    <div className="min-h-full w-full flex flex-col gap-10 pb-20 px-2 transition-colors duration-700 bg-zinc-50 dark:bg-[#020617]">
       {/* --- HERO SECTION (48px = same as layout main) --- */}
       <section className="h-[600px] min-h-[500px] relative rounded-[48px] overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-blue-950/20 shadow-2xl shrink-0 isolate">
         <div className="absolute inset-0 rounded-[48px] overflow-hidden">

@@ -36,7 +36,7 @@ const Home = memo(() => {
 
   if (loading)
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-zinc-50 dark:bg-[var(--background)]">
+      <div className="h-screen w-full flex items-center justify-center bg-zinc-50 dark:bg-[#020617]">
         <div className="text-zinc-900 dark:text-white font-black italic animate-pulse uppercase tracking-[10px]">
           Cinematic<span className="text-red-600">...</span>
         </div>
@@ -46,7 +46,7 @@ const Home = memo(() => {
   const currentHeroMovie = heroMovies[imgIndex];
 
   return (
-    <div className="min-h-full w-full flex flex-col gap-10 pb-20 px-2 transition-colors duration-700 bg-white dark:bg-[var(--background)]">
+    <div className="min-h-full w-full flex flex-col gap-10 pb-20 px-2 transition-colors duration-700 bg-zinc-50 dark:bg-[#020617]">
       {/* --- HERO SECTION (48px radius = same as layout main) --- */}
       <section className="h-[600px] min-h-[500px] relative rounded-[48px] overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-blue-950/20 shadow-2xl shrink-0 isolate">
         {/* Image clipped by inner wrapper so corners match container exactly */}
