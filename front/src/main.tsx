@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Suspense, lazy } from "react";
+import { useAuthStore } from "./store/useAuthStore";
 import "./index.css";
 import './i18n';
 
@@ -35,13 +36,13 @@ const GOOGLE_CLIENT_ID =
   "709964897187-an6sclll2kfpfm4c3umc3bu4cnv0up4r.apps.googleusercontent.com";
 
 const ProtectedRoute = () => {
-  const token = localStorage.getItem("accessToken");
+  const token = useAuthStore((s) => s.token);
   return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 const PublicRoute = () => {
-  const token = localStorage.getItem("accessToken");
-  return !token ? <Outlet /> : <Navigate to="/" replace />;
+  const token = useAuthStore((s) => s.token);
+  return token ? <Navigate to="/" replace /> : <Outlet />;
 };
 
 createRoot(document.getElementById("root")!).render(

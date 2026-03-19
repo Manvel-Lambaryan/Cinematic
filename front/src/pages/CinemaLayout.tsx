@@ -55,14 +55,7 @@ export const CinemaLayout = () => {
   const balance = user?.balance || 0;
   const isDark = theme === 'dark';
 
-  useEffect(() => {
-    const handleFsChange = () => {
-      const fullscreen = !!document.fullscreenElement;
-      useUIStore.setState({ isFullscreen: fullscreen });
-    };
-    document.addEventListener("fullscreenchange", handleFsChange);
-    return () => document.removeEventListener("fullscreenchange", handleFsChange);
-  }, []);
+  // fullscreen listener is in useStoreInitialization
 
   useEffect(() => {
     const root = window.document.documentElement;

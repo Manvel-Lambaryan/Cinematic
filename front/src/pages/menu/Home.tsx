@@ -1,8 +1,9 @@
-import { useEffect, memo } from "react";
+import { useEffect, memo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useMovieTranslation } from "../../hooks/useMovieTranslation";
 import { useMovieStore } from "../../store/useMovieStore";
+import { OptimizedImage } from "../../components/OptimizedImage";
 
 const Home = memo(() => {
   const navigate = useNavigate();
@@ -21,15 +22,17 @@ const Home = memo(() => {
     fetchMovies();
   }, []); // Empty dependency array - fetch once on mount
 
+  const heroLenRef = useRef(heroMovies.length);
+  heroLenRef.current = heroMovies.length;
   useEffect(() => {
-    if (heroMovies.length > 0) {
-      const interval = setInterval(() => {
-        const nextIndex = (imgIndex + 1) % heroMovies.length;
-        setImgIndex(nextIndex);
-      }, 8000);
-      return () => clearInterval(interval);
-    }
-  }, [heroMovies.length, imgIndex, setImgIndex]);
+    if (heroMovies.length === 0) return;
+    const interval = setInterval(() => {
+      const store = useMovieStore.getState();
+      const next = (store.imgIndex + 1) % heroLenRef.current;
+      store.setImgIndex(next);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [heroMovies.length]);
 
   if (loading)
     return (
@@ -147,10 +150,10 @@ const Home = memo(() => {
                   onClick={() => navigate(`/movie/${movie._id}`)}
                   className="w-full h-full p-0 border-none bg-transparent cursor-pointer outline-none block relative"
                 >
-                  <img
+                  <OptimizedImage
                     src={getFullImageUrl(movie.posterUrl?.replace("/not/", "/") || "")}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     alt={movie.title}
+                    className="w-full h-full transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex flex-col justify-end p-6 text-left">
                     <p className="text-red-500 text-[10px] font-black uppercase tracking-widest mb-1">

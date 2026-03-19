@@ -131,13 +131,13 @@ export const useMovieStore = create<MovieState & MovieActions>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // Mark as hydrated and trigger background sync
           state.loading = false;
-          // Trigger background refresh to ensure data is fresh
-          setTimeout(() => {
+          // Background refresh only when we have stale or empty data (avoid double fetch on mount)
+          const hasData = state.movies?.length > 0 || state.heroMovies?.length > 0;
+          if (hasData) {
             const store = useMovieStore.getState();
-            store.fetchMovies();
-          }, 100);
+            setTimeout(() => store.fetchMovies(), 2000);
+          }
         }
       },
     }

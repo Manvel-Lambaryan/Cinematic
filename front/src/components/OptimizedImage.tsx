@@ -31,11 +31,12 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
   const [hasError, setHasError] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  // Intersection Observer for lazy loading
+  // Intersection Observer for lazy loading — observe container (img not in DOM until isInView)
   useEffect(() => {
-    if (priority || !imgRef.current) return;
+    if (priority || !containerRef.current) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -45,13 +46,12 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         }
       },
       {
-        rootMargin: '50px', // Start loading 50px before image comes into view
+        rootMargin: '50px',
         threshold: 0.1,
       }
     );
 
-    observer.observe(imgRef.current);
-
+    observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, [priority]);
 
@@ -82,7 +82,8 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   };
 
   return (
-    <div 
+    <div
+      ref={containerRef}
       className={cn(
         'relative overflow-hidden bg-gray-200 dark:bg-gray-800',
         className
@@ -107,6 +108,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
       {isInView && (
         <img
           ref={imgRef}
+          fetchPriority={priority ? 'high' : undefined}
           src={hasError ? placeholder : src}
           srcSet={hasError ? '' : generateSrcSet(src)}
           sizes={generateSizes()}

@@ -1,37 +1,76 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useMovieTranslation } from "../../../hooks/useMovieTranslation";
 import { useMovieStore } from "../../../store/useMovieStore";
+import { OptimizedImage } from "../../../components/OptimizedImage";
 
 const GENRES = ["Action", "Fighter", "Crime", "Fantastic", "Hard Science Fiction", "Comedy", "Horror", "Drama"];
 
-export const Discover = () => {
+const MovieCard = memo(({ movie, onNavigate, getMovieTitle, getImageUrl }: {
+  movie: any;
+  onNavigate: (id: string) => void;
+  getMovieTitle: (t: string) => string;
+  getImageUrl: (path: string) => string;
+}) => (
+  <motion.div
+    layout
+    initial={{ opacity: 0, scale: 0.95 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.95 }}
+    whileHover={{ y: -8, transition: { duration: 0.2 } }}
+    onClick={() => onNavigate(movie._id)}
+    className="group cursor-pointer"
+  >
+    <div className="relative aspect-[2/3] rounded-[2rem] overflow-hidden shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/5 bg-slate-200 dark:bg-white/5 transition-all duration-500 group-hover:shadow-red-600/25 group-hover:border-red-600/40">
+      <OptimizedImage
+        src={getImageUrl(movie.posterUrl || movie.imageUrl)}
+        alt={movie.title}
+        className="w-full h-full transition-transform duration-1000 group-hover:scale-110"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
+        <div className="bg-red-600 text-[8px] font-black px-2 py-0.5 rounded w-fit mb-2 uppercase italic text-white">{movie.genre}</div>
+        <h4 className="text-white font-black text-xs uppercase leading-tight drop-shadow-md">{getMovieTitle(movie.title)}</h4>
+      </div>
+    </div>
+    <div className="mt-4 text-center px-1">
+      <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30 group-hover:text-red-600 transition-colors duration-300 truncate">
+        {getMovieTitle(movie.title)}
+      </h3>
+      <motion.div
+        className="h-[1.5px] bg-red-600 mx-auto mt-2"
+        initial={{ width: 0 }}
+        whileHover={{ width: "50%" }}
+      />
+    </div>
+  </motion.div>
+));
+
+export const Discover = memo(() => {
   const navigate = useNavigate();
   const { getMovieTitle, t } = useMovieTranslation();
 
-  // Movie store selectors
   const movies = useMovieStore(state => state.movies);
   const loading = useMovieStore(state => state.loading);
   const fetchMovies = useMovieStore(state => state.fetchMovies);
   const getFullImageUrl = useMovieStore(state => state.getFullImageUrl);
 
-  // Local UI state (kept local as it's UI-specific)
-  const [filteredMovies, setFilteredMovies] = useState<any[]>([]);
   const [selectedGenre, setSelectedGenre] = useState("All");
   const [genreIndex, setGenreIndex] = useState(0);
+
+  const filteredMovies = useMemo(() => {
+    if (selectedGenre === "All") return movies;
+    return movies.filter(m => m.genre?.toLowerCase().includes(selectedGenre.toLowerCase()));
+  }, [movies, selectedGenre]);
+
+  const getImageUrl = useMemo(() => (path: string) => {
+    if (!path) return "";
+    return getFullImageUrl(path.replace("/not/", "/"));
+  }, [getFullImageUrl]);
 
   useEffect(() => {
     fetchMovies();
   }, [fetchMovies]);
-
-  // Update filtered movies when movies or selected genre changes
-  useEffect(() => {
-    const filtered = selectedGenre === "All" 
-      ? movies 
-      : movies.filter(m => m.genre?.toLowerCase().includes(selectedGenre.toLowerCase()));
-    setFilteredMovies(filtered);
-  }, [movies, selectedGenre]);
 
   useEffect(() => {
     if (selectedGenre === "All") {
@@ -45,12 +84,6 @@ export const Discover = () => {
   const handleGenreClick = (genre: string) => {
     setSelectedGenre(genre);
     if (genre !== "All") setGenreIndex(GENRES.indexOf(genre));
-  };
-
-  const getImageUrl = (path: string) => {
-    if (!path) return "";
-    const cleanPath = path.replace("/not/", "/");
-    return getFullImageUrl(cleanPath);
   };
 
   if (loading) return (
@@ -120,41 +153,13 @@ export const Discover = () => {
       >
         <AnimatePresence mode="popLayout">
           {filteredMovies.map((movie) => (
-            <motion.div
+            <MovieCard
               key={movie._id}
-              layout
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              whileHover={{ y: -8, transition: { duration: 0.2 } }}
-              onClick={() => navigate(`/movie/${movie._id}`)}
-              className="group cursor-pointer"
-            >
-              {/* Poster Card */}
-              <div className="relative aspect-[2/3] rounded-[2rem] overflow-hidden shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/5 bg-slate-200 dark:bg-white/5 transition-all duration-500 group-hover:shadow-red-600/25 group-hover:border-red-600/40">
-                <img
-                  src={getImageUrl(movie.posterUrl || movie.imageUrl)}
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                  alt={movie.title}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
-                  <div className="bg-red-600 text-[8px] font-black px-2 py-0.5 rounded w-fit mb-2 uppercase italic text-white">{movie.genre}</div>
-                  <h4 className="text-white font-black text-xs uppercase leading-tight drop-shadow-md">{getMovieTitle(movie.title)}</h4>
-                </div>
-              </div>
-
-              {/* Title Section */}
-              <div className="mt-4 text-center px-1">
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30 group-hover:text-red-600 transition-colors duration-300 truncate">
-                  {getMovieTitle(movie.title)}
-                </h3>
-                <motion.div
-                  className="h-[1.5px] bg-red-600 mx-auto mt-2"
-                  initial={{ width: 0 }}
-                  whileHover={{ width: "50%" }}
-                />
-              </div>
-            </motion.div>
+              movie={movie}
+              onNavigate={(id) => navigate(`/movie/${id}`)}
+              getMovieTitle={getMovieTitle}
+              getImageUrl={getImageUrl}
+            />
           ))}
         </AnimatePresence>
       </motion.div>
@@ -165,4 +170,4 @@ export const Discover = () => {
       </div>
     </div>
   );
-};
+});

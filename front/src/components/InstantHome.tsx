@@ -68,16 +68,29 @@ const InstantHome = memo(() => {
     }
   }, [carouselData.hasData, loading, fetchMovies]);
 
-  // Background sync for fresh data
+  // Background sync only when tab is visible (saves CPU/network when tab hidden)
   useEffect(() => {
-    // Sync in background every 30 seconds to keep data fresh
-    const syncInterval = setInterval(() => {
-      if (carouselData.hasData) {
-        fetchMovies(); // Silent background refresh
+    let syncInterval: ReturnType<typeof setInterval> | null = null;
+    const schedule = () => {
+      if (document.visibilityState === "visible" && carouselData.hasData) {
+        if (!syncInterval) {
+          syncInterval = setInterval(() => {
+            if (document.visibilityState === "visible") fetchMovies();
+          }, 30000);
+        }
+      } else {
+        if (syncInterval) {
+          clearInterval(syncInterval);
+          syncInterval = null;
+        }
       }
-    }, 30000);
-
-    return () => clearInterval(syncInterval);
+    };
+    schedule();
+    document.addEventListener("visibilitychange", schedule);
+    return () => {
+      document.removeEventListener("visibilitychange", schedule);
+      if (syncInterval) clearInterval(syncInterval);
+    };
   }, [carouselData.hasData, fetchMovies]);
 
   // Carousel interval - only run if we have data
