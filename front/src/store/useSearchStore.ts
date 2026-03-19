@@ -5,6 +5,8 @@ interface SearchState {
   query: string;
   results: any[];
   isSearching: boolean;
+  /** Վերջին հաջող որոնումը արդյունք չի տվել (dropdown-ում «No matches») */
+  lastSearchEmpty: boolean;
   error: string;
   filters: {
     genre?: string;
@@ -27,6 +29,7 @@ export const useSearchStore = create<SearchState & SearchActions>((set, get) => 
   query: '',
   results: [],
   isSearching: false,
+  lastSearchEmpty: false,
   error: '',
   filters: {},
 
@@ -36,28 +39,35 @@ export const useSearchStore = create<SearchState & SearchActions>((set, get) => 
   searchMovies: async (query?: string) => {
     const searchQuery = query || get().query;
     if (!searchQuery.trim()) {
-      set({ results: [], isSearching: false });
+      set({ results: [], isSearching: false, lastSearchEmpty: false, error: '' });
       return;
     }
 
-    set({ isSearching: true, error: '' });
+    set({ isSearching: true, error: '', lastSearchEmpty: false });
     try {
       const response = await Axios.get(`/movie/search/${encodeURIComponent(searchQuery.trim())}`);
-      const movieData = response.data;
+      const raw = response.data;
+      const movieData = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.data)
+          ? raw.data
+          : [];
       set({
-        results: Array.isArray(movieData) ? movieData : [],
+        results: movieData,
         isSearching: false,
+        lastSearchEmpty: movieData.length === 0,
       });
     } catch (err: any) {
-      set({ 
-        error: err.response?.data?.message || 'Search failed',
+      set({
+        error: err.response?.data?.message || err.message || 'Search failed',
         isSearching: false,
         results: [],
+        lastSearchEmpty: false,
       });
     }
   },
 
-  clearResults: () => set({ results: [], query: '', error: '' }),
+  clearResults: () => set({ results: [], query: '', error: '', lastSearchEmpty: false }),
 
   setFilters: (filters: Partial<SearchState['filters']>) => {
     set((state) => ({

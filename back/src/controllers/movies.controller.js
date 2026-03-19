@@ -125,8 +125,10 @@ const updateMovie = asyncHandler(async (req, res) => {
 });
 
 const searchMovie = asyncHandler(async (req, res) => {
+  const raw = String(req.params.title || "");
+  const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const movies = await Movie.find({
-    title: { $regex: req.params.title, $options: "i" },
+    title: { $regex: escaped, $options: "i" },
   }).limit(5);
   res.json(movies);
 });
