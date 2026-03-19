@@ -105,7 +105,7 @@ const InstantHome = memo(() => {
   }, [carouselData.hasData, carouselData.movies.length, imgIndex, setImgIndex]);
 
   return (
-    <div className="min-h-full w-full flex flex-col gap-8 pb-20 px-4 transition-colors duration-700 bg-zinc-50 dark:bg-[#020617]">
+    <div className="min-h-full w-full flex flex-col gap-8 pb-20 px-3 sm:px-4 transition-colors duration-700 bg-zinc-50 dark:bg-[#020617]">
       {/* --- HERO: լայնությունը content-ի ներսում, երկարությունը ֆիքսված --- */}
       <section className="h-[56vh] min-h-[420px] max-h-[680px] relative overflow-hidden rounded-2xl bg-zinc-900 dark:bg-black shrink-0 isolate">
         <div className="absolute inset-0 overflow-hidden">
@@ -174,7 +174,7 @@ const InstantHome = memo(() => {
       </section>
 
       {/* --- MARQUEE --- */}
-      <div className="py-5 bg-zinc-100 dark:bg-[#020617] border-y border-zinc-200/50 dark:border-white/5 overflow-hidden flex whitespace-nowrap transition-colors duration-700 -mx-4 px-0">
+      <div className="py-5 bg-zinc-100 dark:bg-[#020617] border-y border-zinc-200/50 dark:border-white/5 overflow-hidden flex whitespace-nowrap transition-colors duration-700 -mx-3 sm:-mx-4 px-0">
         <motion.div
           initial={{ x: 0 }}
           animate={{ x: "-50%" }}

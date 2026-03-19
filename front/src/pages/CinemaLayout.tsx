@@ -74,7 +74,7 @@ export const CinemaLayout = () => {
   };
 
   return (
-    <div className="min-h-screen h-screen w-screen transition-colors duration-700 bg-zinc-50 dark:bg-[#020617] text-zinc-900 dark:text-white font-sans overflow-hidden flex flex-col p-5 gap-5 relative">
+    <div className="min-h-screen h-screen w-screen transition-colors duration-700 bg-zinc-50 dark:bg-[#020617] text-zinc-900 dark:text-white font-sans overflow-hidden flex flex-col py-4 px-3 sm:px-4 md:px-5 gap-4 relative">
       {/* ⚙️ SETTINGS DRAWER */}
       <AnimatePresence>
         {isSettingsOpen && (
@@ -208,7 +208,7 @@ export const CinemaLayout = () => {
         )}
       </AnimatePresence>
 
-      <header className="h-24 min-h-[96px] bg-white/70 dark:bg-white/[0.02] backdrop-blur-3xl border border-zinc-200 dark:border-white/5 rounded-[40px] flex items-center justify-between px-10 shadow-xl z-50">
+      <header className="h-24 min-h-[96px] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] relative left-1/2 -ml-[calc(50vw-0.5rem)] rounded-2xl bg-white/70 dark:bg-white/[0.02] backdrop-blur-3xl border border-zinc-200 dark:border-white/5 flex items-center justify-between px-4 sm:px-6 md:px-8 lg:px-10 shadow-xl z-50 shrink-0">
         <div className="flex items-center gap-12">
           <Link to="/" className="group">
             <h1 className="text-2xl font-black italic tracking-tighter uppercase leading-none text-zinc-900 dark:text-white">
@@ -308,7 +308,7 @@ export const CinemaLayout = () => {
       </header>
 
       <main className="flex-1 min-h-0 relative overflow-hidden bg-zinc-50 dark:bg-[#020617]">
-        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 pb-6 no-scrollbar">
+        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden px-3 sm:px-4 md:px-5 py-4 pb-6 no-scrollbar">
           <Outlet />
           <section className="mt-16" aria-label="Footer">
             <Footer />
