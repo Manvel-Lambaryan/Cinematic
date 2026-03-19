@@ -12,7 +12,7 @@ const MovieSkeleton = memo(() => (
 ));
 
 const HeroSkeleton = memo(() => (
-  <div className="h-[600px] min-h-[500px] relative rounded-[48px] overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-blue-950/20 shadow-2xl shrink-0 animate-pulse">
+  <div className="h-[56vh] min-h-[420px] max-h-[680px] relative overflow-hidden rounded-2xl bg-zinc-900 dark:bg-black shrink-0 animate-pulse">
     <div className="absolute inset-0 bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-blue-800/20 dark:to-blue-900/20" />
     <div className="absolute bottom-16 left-16 right-16">
       <div className="h-16 w-3/4 bg-zinc-300 dark:bg-blue-800/30 rounded-lg mb-8 animate-pulse" />
@@ -104,12 +104,11 @@ const InstantHome = memo(() => {
     }
   }, [carouselData.hasData, carouselData.movies.length, imgIndex, setImgIndex]);
 
-  // Instant UI rendering with skeleton fallbacks
   return (
-    <div className="min-h-full w-full flex flex-col gap-10 pb-20 px-2 transition-colors duration-700 bg-zinc-50 dark:bg-[#020617]">
-      {/* --- HERO SECTION (48px = same as layout main) --- */}
-      <section className="h-[600px] min-h-[500px] relative rounded-[48px] overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-blue-950/20 shadow-2xl shrink-0 isolate">
-        <div className="absolute inset-0 rounded-[48px] overflow-hidden">
+    <div className="min-h-full w-full flex flex-col gap-8 pb-20 px-4 transition-colors duration-700 bg-zinc-50 dark:bg-[#020617]">
+      {/* --- HERO: լայնությունը content-ի ներսում, երկարությունը ֆիքսված --- */}
+      <section className="h-[56vh] min-h-[420px] max-h-[680px] relative overflow-hidden rounded-2xl bg-zinc-900 dark:bg-black shrink-0 isolate">
+        <div className="absolute inset-0 overflow-hidden">
           <AnimatePresence mode="wait">
             {carouselData.hasData && carouselData.currentMovie ? (
               <motion.img
@@ -131,8 +130,8 @@ const InstantHome = memo(() => {
           </AnimatePresence>
         </div>
 
-        <div className="absolute inset-0 rounded-[48px] bg-gradient-to-t from-white via-transparent to-transparent dark:from-[var(--background)] dark:via-transparent dark:to-transparent z-10 transition-colors duration-700 pointer-events-none" />
-        <div className="absolute inset-0 rounded-[48px] bg-gradient-to-r from-white/20 via-transparent to-transparent dark:from-black/40 dark:via-transparent dark:to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-50 via-transparent to-transparent dark:from-[#020617] dark:via-transparent dark:to-transparent z-10 transition-colors duration-700 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent dark:from-black/50 dark:via-transparent dark:to-transparent z-10 pointer-events-none" />
 
         <div className="absolute inset-0 p-16 flex flex-col justify-end z-20">
           <AnimatePresence mode="wait">
@@ -175,7 +174,7 @@ const InstantHome = memo(() => {
       </section>
 
       {/* --- MARQUEE --- */}
-      <div className="py-8 bg-zinc-100 dark:bg-blue-950/20 border-y border-zinc-200 dark:border-white/5 overflow-hidden flex whitespace-nowrap transition-colors duration-700">
+      <div className="py-5 bg-zinc-100 dark:bg-[#020617] border-y border-zinc-200/50 dark:border-white/5 overflow-hidden flex whitespace-nowrap transition-colors duration-700 -mx-4 px-0">
         <motion.div
           initial={{ x: 0 }}
           animate={{ x: "-50%" }}
@@ -194,8 +193,8 @@ const InstantHome = memo(() => {
         </motion.div>
       </div>
 
-      {/* --- TRENDING SECTION --- */}
-      <section className="px-4">
+      {/* --- TRENDING --- */}
+      <section className="pt-2">
         <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-10 text-zinc-900 dark:text-white flex items-center gap-4 transition-colors">
           <span className="w-10 h-[2px] bg-red-600 inline-block"></span>
           {t("trending", { defaultValue: "Trending" })} <span className="text-red-600">{t("now", { defaultValue: "Now" })}</span>
@@ -234,7 +233,6 @@ const InstantHome = memo(() => {
               </motion.div>
             ))
           ) : (
-            // Show skeletons while loading or if no data
             [...Array(6)].map((_, index) => <MovieSkeleton key={index} />)
           )}
         </div>
