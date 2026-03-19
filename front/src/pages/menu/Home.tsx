@@ -1,56 +1,35 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Axios } from "../../config/axios";
 import { useNavigate } from "react-router-dom";
-import { API_URL } from "../../config/axios";
-import { useMovieTranslation } from "../../hooks/useMovieTranslation"; // 1. Ներմուծում ենք Hook-ը
+import { useMovieTranslation } from "../../hooks/useMovieTranslation";
+import { useMovieStore } from "../../store/useMovieStore";
 
-export const Home = () => {
-  const [movies, setMovies] = useState<any[]>([]);
-  const [heroMovies, setHeroMovies] = useState<any[]>([]);
-  const [imgIndex, setImgIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-
+const Home = memo(() => {
   const navigate = useNavigate();
-  const { getMovieTitle, t } = useMovieTranslation(); // 2. Օգտագործում ենք Hook-ը
+  const { getMovieTitle, t } = useMovieTranslation();
+
+  // Optimized selectors with individual store calls
+  const imgIndex = useMovieStore((state) => state.imgIndex);
+  const heroMovies = useMovieStore((state) => state.heroMovies);
+  const loading = useMovieStore((state) => state.loading);
+  const movies = useMovieStore((state) => state.movies);
+  const fetchMovies = useMovieStore((state) => state.fetchMovies);
+  const setImgIndex = useMovieStore((state) => state.setImgIndex);
+  const getFullImageUrl = useMovieStore((state) => state.getFullImageUrl);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const moviesRes = await Axios.get("/movie");
-        const movieData = moviesRes.data.data || moviesRes.data;
-
-        if (Array.isArray(movieData)) {
-          setMovies(movieData);
-          const randomSix = [...movieData]
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 6);
-          setHeroMovies(randomSix);
-        }
-      } catch (err) {
-        console.error("Fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    fetchMovies();
+  }, []); // Empty dependency array - fetch once on mount
 
   useEffect(() => {
     if (heroMovies.length > 0) {
       const interval = setInterval(() => {
-        setImgIndex((prev) => (prev + 1) % heroMovies.length);
+        const nextIndex = (imgIndex + 1) % heroMovies.length;
+        setImgIndex(nextIndex);
       }, 8000);
       return () => clearInterval(interval);
     }
-  }, [heroMovies.length]);
-
-  const getFullImageUrl = (path: string) => {
-    if (!path) return "";
-    if (path.startsWith("http")) return path;
-    const cleanPath = path.startsWith("/") ? path : `/${path}`;
-    return `${API_URL}${cleanPath}`;
-  };
+  }, [heroMovies.length, imgIndex, setImgIndex]);
 
   if (loading)
     return (
@@ -64,7 +43,7 @@ export const Home = () => {
   const currentHeroMovie = heroMovies[imgIndex];
 
   return (
-    <div className="h-full w-full flex flex-col gap-10 overflow-y-auto no-scrollbar pb-20 px-2 transition-colors duration-700 bg-white dark:bg-[var(--background)]">
+    <div className="min-h-full w-full flex flex-col gap-10 pb-20 px-2 transition-colors duration-700 bg-white dark:bg-[var(--background)]">
       {/* --- HERO SECTION --- */}
       <section className="h-[600px] min-h-[500px] relative rounded-[45px] overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-blue-950/20 shadow-2xl shrink-0">
         <AnimatePresence mode="wait">
@@ -73,8 +52,8 @@ export const Home = () => {
               key={currentHeroMovie?._id}
               src={getFullImageUrl(
                 currentHeroMovie.imageUrl?.includes("/not/")
-                  ? currentHeroMovie.imageUrl
-                  : currentHeroMovie.imageUrl?.replace("/uploads/", "/uploads/not/"),
+                  ? currentHeroMovie.imageUrl || ""
+                  : currentHeroMovie.imageUrl?.replace("/uploads/", "/uploads/not/") || "",
               )}
               initial={{ opacity: 0, scale: 1.1 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -115,7 +94,7 @@ export const Home = () => {
                 </motion.h1>
 
                 <div className="flex gap-2 mt-8 items-center">
-                  {heroMovies.slice(0, 10).map((_, i) => (
+                  {heroMovies.slice(0, 10).map((_: any, i: number) => (
                     <motion.div
                       key={i}
                       onClick={(e) => { e.stopPropagation(); setImgIndex(i); }}
@@ -169,7 +148,7 @@ export const Home = () => {
                   className="w-full h-full p-0 border-none bg-transparent cursor-pointer outline-none block relative"
                 >
                   <img
-                    src={getFullImageUrl(movie.posterUrl?.replace("/not/", "/"))}
+                    src={getFullImageUrl(movie.posterUrl?.replace("/not/", "/") || "")}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     alt={movie.title}
                   />
@@ -197,4 +176,6 @@ export const Home = () => {
       </section>
     </div>
   );
-};
+});
+
+export default Home;

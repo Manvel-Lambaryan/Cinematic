@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import { Axios } from "../../config/axios";
 import type { IMovie } from "../../types/type";
 import {
   Trash2,
-  AlertCircle,
   Search,
   Pencil,
   X,
@@ -13,62 +11,41 @@ import {
   Star,
   Layers,
   Video,
-  LayoutGrid, // Նոր icon դահլիճի համար
+  LayoutGrid,
   Calendar,
   Clock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { API_URL } from "../../config/axios";
+import { useAdminStore } from "../../store/useAdminStore";
+import { useMovieStore } from "../../store/useMovieStore";
 
 const MovieList = () => {
-  const [movies, setMovies] = useState<IMovie[]>([]);
-  const [cinemas, setCinemas] = useState<any[]>([]); // Դահլիճների state
-  const [loading, setLoading] = useState(false);
+  // Admin store selectors
+  const movies = useAdminStore(state => state.movies);
+  const cinemas = useAdminStore(state => state.cinemas);
+  const fetchMovies = useAdminStore(state => state.fetchMovies);
+  const fetchCinemas = useAdminStore(state => state.fetchCinemas);
+  const deleteMovie = useAdminStore(state => state.deleteMovie);
+  
+  // Movie store for image URL generation
+  const getFullImageUrl = useMovieStore(state => state.getFullImageUrl);
+  
+  // Local UI state (kept local as it's UI-specific)
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingMovie, setEditingMovie] = useState<IMovie | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchMovies();
-    fetchCinemas(); // Բեռնում ենք դահլիճները էջը բացելիս
-  }, []);
-
-  const fetchMovies = async () => {
-    try {
-      const res = await Axios.get("/movie");
-      const data = res.data.data || res.data;
-      if (Array.isArray(data)) setMovies(data);
-    } catch (err) {
-      console.error("Failed to fetch movies", err);
-    }
-  };
-
-  const fetchCinemas = async () => {
-    try {
-      const res = await Axios.get("/cinema");
-      const data = res.data.data || res.data;
-      if (Array.isArray(data)) setCinemas(data);
-    } catch (err) {
-      console.error("Failed to fetch cinemas", err);
-    }
-  };
-
-  const getImageUrl = (path: string) => {
-    if (!path) return "";
-    if (path.startsWith("http")) return path;
-    const cleanPath = path.replace("/not/", "/");
-    const finalPath = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
-    return `${API_URL}${finalPath}`;
-  };
+    fetchCinemas();
+  }, [fetchMovies, fetchCinemas]);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to remove this title?")) return;
     setLoading(true);
     try {
-      const res = await Axios.delete(`/movie/${id}`);
-      if (res.data.success || res.status === 200) {
-        setMovies((prev) => prev.filter((m) => m._id !== id));
-      }
+      await deleteMovie(id);
     } catch (err) {
       alert("Delete failed");
     } finally {
@@ -86,13 +63,10 @@ const MovieList = () => {
     if (!editingMovie) return;
     setLoading(true);
     try {
-      const res = await Axios.patch(`/movie/${editingMovie._id}`, editingMovie);
-      if (res.data.success || res.status === 200) {
-        setMovies((prev) =>
-          prev.map((m) => (m._id === editingMovie._id ? editingMovie : m)),
-        );
-        setIsEditModalOpen(false);
-      }
+      const { Axios } = await import("../../config/axios");
+      await Axios.patch(`/movie/${editingMovie._id}`, editingMovie);
+      await fetchMovies();
+      setIsEditModalOpen(false);
     } catch (err) {
       alert("Update failed");
     } finally {
@@ -103,6 +77,18 @@ const MovieList = () => {
   const filteredMovies = movies.filter((m) =>
     m.title.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const getPosterSrc = (movie: IMovie) => {
+    const path = movie.posterUrl || movie.imageUrl || "";
+    if (!path) return { src: "", fallback: "" };
+    const src = getFullImageUrl(path);
+    const fallback = path.includes("/uploads/not/")
+      ? getFullImageUrl(path.replace("/uploads/not/", "/uploads/"))
+      : path.includes("/uploads/") && !path.includes("/uploads/not/")
+        ? getFullImageUrl(path.replace("/uploads/", "/uploads/not/"))
+        : "";
+    return { src, fallback };
+  };
 
   return (
     <div className="min-h-screen bg-transparent p-4 md:p-10 font-sans text-zinc-900 dark:text-white transition-colors duration-700">
@@ -137,7 +123,9 @@ const MovieList = () => {
         {/* --- MOVIE LIST --- */}
         <div className="space-y-4">
           <AnimatePresence>
-            {filteredMovies.map((movie, index) => (
+            {filteredMovies.map((movie, index) => {
+              const poster = getPosterSrc(movie);
+              return (
               <motion.div
                 key={movie._id}
                 initial={{ opacity: 0, y: 20 }}
@@ -147,11 +135,22 @@ const MovieList = () => {
                 className="group flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-zinc-900/40 hover:bg-zinc-50 dark:hover:bg-zinc-900/80 p-5 rounded-[30px] border border-zinc-200 dark:border-white/5 hover:border-red-600/30 transition-all duration-500 shadow-sm"
               >
                 <div className="flex items-center gap-6">
-                  <img
-                    src={getImageUrl(movie.posterUrl || movie.imageUrl)}
-                    alt={movie.title}
-                    className="w-16 h-24 object-cover rounded-xl shadow-lg border border-zinc-200 dark:border-white/10"
-                  />
+                  {poster.src ? (
+                    <img
+                      src={poster.src}
+                      alt={movie.title}
+                      className="w-16 h-24 object-cover rounded-xl shadow-lg border border-zinc-200 dark:border-white/10"
+                      onError={(e) => {
+                        if (poster.fallback && e.currentTarget.src !== poster.fallback) {
+                          e.currentTarget.src = poster.fallback;
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="w-16 h-24 rounded-xl bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center border border-zinc-200 dark:border-white/10">
+                      <Clapperboard className="w-8 h-8 text-zinc-400" />
+                    </div>
+                  )}
                   <div>
                     <h3 className="text-xl font-black uppercase italic group-hover:text-red-600 transition-colors dark:text-white">
                       {movie.title}
@@ -197,7 +196,8 @@ const MovieList = () => {
                   </button>
                 </div>
               </motion.div>
-            ))}
+            );
+            })}
           </AnimatePresence>
         </div>
       </div>
@@ -242,13 +242,26 @@ const MovieList = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Poster Preview */}
                     <div className="flex flex-col gap-6">
-                      <img
-                        src={getImageUrl(
-                          editingMovie.posterUrl || editingMovie.imageUrl,
-                        )}
-                        className="w-full h-80 object-cover rounded-[30px] shadow-2xl border dark:border-white/10"
-                        alt="Poster"
-                      />
+                      {(editingMovie.posterUrl || editingMovie.imageUrl) ? (
+                        <img
+                          src={getFullImageUrl(
+                            editingMovie.posterUrl || editingMovie.imageUrl || "",
+                          )}
+                          className="w-full h-80 object-cover rounded-[30px] shadow-2xl border dark:border-white/10"
+                          alt="Poster"
+                          onError={(e) => {
+                            const path = editingMovie.posterUrl || editingMovie.imageUrl || "";
+                            const fallback = path.includes("/uploads/not/")
+                              ? getFullImageUrl(path.replace("/uploads/not/", "/uploads/"))
+                              : getFullImageUrl(path.replace("/uploads/", "/uploads/not/"));
+                            if (fallback && e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-80 rounded-[30px] bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center border dark:border-white/10">
+                          <Clapperboard className="w-16 h-16 text-zinc-400" />
+                        </div>
+                      )}
                       <div className="space-y-3">
                         <label className="text-[10px] uppercase font-black text-zinc-400 tracking-widest ml-2 flex items-center gap-2">
                           <Video size={12} /> Trailer URL

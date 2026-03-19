@@ -1,43 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Ticket, ChevronRight, User } from "lucide-react";
-import { Axios } from "../../../config/axios";
 import { useTranslation } from "react-i18next";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 export const Register = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  
+  // Auth store selectors
+  const register = useAuthStore(state => state.register);
+  const loading = useAuthStore(state => state.loading);
+  const error = useAuthStore(state => state.error);
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const clearError = useAuthStore(state => state.clearError);
+  
+  // Local form state (kept local as it's form-specific)
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
 
   const cinemaBackground =
     "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070&auto=format&fit=crop";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const response = await Axios.post("/auth/register", {
-        name,
-        email,
-        password,
-      });
-
-      const { accessToken } = response.data;
-      localStorage.setItem("accessToken", accessToken);
-      navigate("/login");
-    } catch (err: any) {
-      setError(err.response?.data?.err || t("registration_failed"));
-    } finally {
-      setLoading(false);
-    }
+    clearError();
+    await register(name, email, password);
   };
 
   return (

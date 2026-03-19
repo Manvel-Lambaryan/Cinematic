@@ -1,36 +1,37 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Axios, API_URL } from "../../../config/axios";
 import { useNavigate } from "react-router-dom";
 import { useMovieTranslation } from "../../../hooks/useMovieTranslation";
+import { useMovieStore } from "../../../store/useMovieStore";
 
 const GENRES = ["Action", "Fighter", "Crime", "Fantastic", "Hard Science Fiction", "Comedy", "Horror", "Drama"];
 
 export const Discover = () => {
-  const [allMovies, setAllMovies] = useState<any[]>([]);
-  const [filteredMovies, setFilteredMovies] = useState<any[]>([]);
-  const [selectedGenre, setSelectedGenre] = useState("All");
-  const [loading, setLoading] = useState(true);
-  const [genreIndex, setGenreIndex] = useState(0);
-
   const navigate = useNavigate();
   const { getMovieTitle, t } = useMovieTranslation();
 
+  // Movie store selectors
+  const movies = useMovieStore(state => state.movies);
+  const loading = useMovieStore(state => state.loading);
+  const fetchMovies = useMovieStore(state => state.fetchMovies);
+  const getFullImageUrl = useMovieStore(state => state.getFullImageUrl);
+
+  // Local UI state (kept local as it's UI-specific)
+  const [filteredMovies, setFilteredMovies] = useState<any[]>([]);
+  const [selectedGenre, setSelectedGenre] = useState("All");
+  const [genreIndex, setGenreIndex] = useState(0);
+
   useEffect(() => {
-    const fetchMovies = async () => {
-      try {
-        const res = await Axios.get("/movie");
-        const data = res.data.data || res.data;
-        setAllMovies(data);
-        setFilteredMovies(data);
-      } catch (err) {
-        console.error("Discover error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchMovies();
-  }, []);
+  }, [fetchMovies]);
+
+  // Update filtered movies when movies or selected genre changes
+  useEffect(() => {
+    const filtered = selectedGenre === "All" 
+      ? movies 
+      : movies.filter(m => m.genre?.toLowerCase().includes(selectedGenre.toLowerCase()));
+    setFilteredMovies(filtered);
+  }, [movies, selectedGenre]);
 
   useEffect(() => {
     if (selectedGenre === "All") {
@@ -43,15 +44,13 @@ export const Discover = () => {
 
   const handleGenreClick = (genre: string) => {
     setSelectedGenre(genre);
-    const filtered = genre === "All" ? allMovies : allMovies.filter(m => m.genre?.toLowerCase().includes(genre.toLowerCase()));
-    setFilteredMovies(filtered);
     if (genre !== "All") setGenreIndex(GENRES.indexOf(genre));
   };
 
   const getImageUrl = (path: string) => {
     if (!path) return "";
     const cleanPath = path.replace("/not/", "/");
-    return `${API_URL}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
+    return getFullImageUrl(cleanPath);
   };
 
   if (loading) return (

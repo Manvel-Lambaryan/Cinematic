@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { jwtDecode } from "jwt-decode";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Squares2X2Icon,
   FilmIcon,
   ArrowRightOnRectangleIcon,
-  ShieldCheckIcon, // Admin icon
+  ShieldCheckIcon,
   SunIcon,
   MoonIcon,
   WalletIcon,
@@ -20,86 +19,69 @@ import {
   ArrowsPointingInIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
-import { Axios } from "../config/axios";
+import { useAuthStore } from "../store/useAuthStore";
+import { useUIStore } from "../store/useUIStore";
+import { useStoreInitialization } from "../hooks/useStoreInitialization";
 import { Search } from "./menu/movie/Search";
+import { Footer } from "../components/Footer";
 
 export const CinemaLayout = () => {
   const { t, i18n } = useTranslation();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [userName, setUserName] = useState("");
-  const [balance, setBalance] = useState<number>(0);
-  const [isDark, setIsDark] = useState(
-    () => localStorage.getItem("theme") !== "light",
-  );
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
   const location = useLocation();
   const navigate = useNavigate();
 
-  const changeLanguage = (lng: string) => i18n.changeLanguage(lng);
+  // Auth store selectors
+  const user = useAuthStore(state => state.user);
+  const isAdmin = useAuthStore(state => state.isAdmin);
+  const logout = useAuthStore(state => state.logout);
+  const fetchUserData = useAuthStore(state => state.fetchUserData);
+  
+  // UI store selectors
+  const theme = useUIStore(state => state.theme);
+  const isSettingsOpen = useUIStore(state => state.isSettingsOpen);
+  const isFullscreen = useUIStore(state => state.isFullscreen);
+  const setTheme = useUIStore(state => state.setTheme);
+  const setLanguage = useUIStore(state => state.setLanguage);
+  const setSettingsOpen = useUIStore(state => state.setSettingsOpen);
+  const toggleFullscreen = useUIStore(state => state.toggleFullscreen);
+  
+  // Initialize stores
+  useStoreInitialization();
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement
-        .requestFullscreen()
-        .then(() => setIsFullscreen(true));
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
+  const changeLanguage = (lng: string) => setLanguage(lng as 'am' | 'en' | 'ru');
+
+  // Computed values
+  const userName = user?.name || "Guest";
+  const balance = user?.balance || 0;
+  const isDark = theme === 'dark';
 
   useEffect(() => {
-    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const handleFsChange = () => {
+      const fullscreen = !!document.fullscreenElement;
+      useUIStore.setState({ isFullscreen: fullscreen });
+    };
     document.addEventListener("fullscreenchange", handleFsChange);
-    return () =>
-      document.removeEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
 
   useEffect(() => {
     const root = window.document.documentElement;
     isDark ? root.classList.add("dark") : root.classList.remove("dark");
-    localStorage.setItem("theme", isDark ? "dark" : "light");
   }, [isDark]);
 
-  const updateUserData = () => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      try {
-        const decoded = jwtDecode<any>(token);
-        setIsAdmin(decoded.role === "admin");
-        const userStr = localStorage.getItem("user");
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          setUserName(user.name || "Guest");
-          setBalance(user.balance || 0);
-        }
-        Axios.get("/auth/user").then((res) => {
-          const freshData = res.data.data || res.data;
-          setUserName(freshData.name);
-          setBalance(freshData.balance);
-          localStorage.setItem("user", JSON.stringify(freshData));
-        });
-      } catch (error) {
-        handleLogout();
-      }
-    }
-  };
-
   useEffect(() => {
-    updateUserData();
-    window.addEventListener("storage", updateUserData);
-    return () => window.removeEventListener("storage", updateUserData);
-  }, []);
+    fetchUserData();
+    window.addEventListener("storage", fetchUserData);
+    return () => window.removeEventListener("storage", fetchUserData);
+  }, [fetchUserData]);
 
   const handleLogout = () => {
-    localStorage.clear();
+    logout();
     navigate("/login");
   };
 
   return (
-    <div className="h-screen w-screen transition-colors duration-700 bg-zinc-50 dark:bg-[#020617] text-zinc-900 dark:text-white font-sans overflow-hidden flex flex-col p-5 gap-5 relative">
+    <div className="min-h-screen h-screen w-screen transition-colors duration-700 bg-zinc-50 dark:bg-[#020617] text-zinc-900 dark:text-white font-sans overflow-hidden flex flex-col p-5 gap-5 relative">
       {/* ⚙️ SETTINGS DRAWER */}
       <AnimatePresence>
         {isSettingsOpen && (
@@ -108,7 +90,7 @@ export const CinemaLayout = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsSettingsOpen(false)}
+              onClick={() => setSettingsOpen(false)}
               className="absolute inset-0 bg-black/40 backdrop-blur-md z-[100]"
             />
             <motion.div
@@ -128,7 +110,7 @@ export const CinemaLayout = () => {
                   </h3>
                 </div>
                 <button
-                  onClick={() => setIsSettingsOpen(false)}
+                  onClick={() => setSettingsOpen(false)}
                   className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"
                 >
                   <XMarkIcon className="w-6 h-6" />
@@ -155,7 +137,7 @@ export const CinemaLayout = () => {
                       }}
                     />
                     <button
-                      onClick={() => setIsDark(false)}
+                      onClick={() => setTheme('light')}
                       className="relative z-10 flex-1 flex items-center justify-center gap-3 py-4 font-black text-[10px] uppercase tracking-widest"
                     >
                       <SunIcon
@@ -164,7 +146,7 @@ export const CinemaLayout = () => {
                       {t("light")}
                     </button>
                     <button
-                      onClick={() => setIsDark(true)}
+                      onClick={() => setTheme('dark')}
                       className="relative z-10 flex-1 flex items-center justify-center gap-3 py-4 font-black text-[10px] uppercase tracking-widest"
                     >
                       <MoonIcon
@@ -297,7 +279,7 @@ export const CinemaLayout = () => {
           </button>
 
           <button
-            onClick={() => setIsSettingsOpen(true)}
+            onClick={() => setSettingsOpen(true)}
             className="p-4 rounded-[22px] bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 hover:border-red-600/50 transition-all group"
           >
             <Cog6ToothIcon className="w-6 h-6 text-zinc-500 dark:text-white/60 group-hover:text-red-600 group-hover:rotate-90 transition-all duration-500" />
@@ -332,9 +314,12 @@ export const CinemaLayout = () => {
         </div>
       </header>
 
-      <main className="flex-1 relative overflow-hidden bg-white/50 dark:bg-white/[0.01] rounded-[48px] border border-zinc-200 dark:border-white/5 shadow-inner">
-        <div className="absolute inset-0 overflow-y-auto no-scrollbar p-1">
+      <main className="flex-1 min-h-0 relative overflow-hidden rounded-[48px] border border-zinc-200 dark:border-white/5 bg-white/50 dark:bg-white/[0.01] shadow-inner">
+        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 pb-6">
           <Outlet />
+          <section className="mt-16" aria-label="Footer">
+            <Footer />
+          </section>
         </div>
       </main>
     </div>

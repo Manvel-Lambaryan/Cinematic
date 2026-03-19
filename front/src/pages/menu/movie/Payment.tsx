@@ -39,7 +39,7 @@ export const PaymentItem = ({ tx, index }: { tx: any; index: number }) => {
         movieId.length > 10
       ) {
         try {
-          const res = await Axios.get(`/movies/${movieId}`);
+          const res = await Axios.get(`/movie/${movieId}`);
           const movieData = res.data.data || res.data;
           setMovie(movieData);
         } catch (err) {
@@ -142,7 +142,8 @@ const PaymentHistory = () => {
         const userId = user._id || user.id;
         if (userId) {
           const res = await Axios.get(`/payments/history/${userId}`);
-          setHistory(res.data.data || res.data || []);
+          const raw = res.data?.data ?? res.data;
+          setHistory(Array.isArray(raw) ? raw : []);
         }
       } catch (err) {
         console.error(err);

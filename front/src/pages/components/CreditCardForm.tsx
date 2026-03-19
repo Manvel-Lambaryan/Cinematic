@@ -69,24 +69,22 @@ export const CreditCardForm = ({ onSuccess }: Props) => {
       return toast.error("Please enter a valid amount");
 
     try {
-      // Simulate external API call
-      await Axios.post("https://jsonplaceholder.typicode.com/posts", {
-        cardDetails: state,
-        amount: depositAmount,
-      });
-
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
       const res = await Axios.post("/payments/deposit", {
         amount: Number(depositAmount),
       });
 
-      if (res.data.success) {
-        user.balance = res.data.newBalance;
-        localStorage.setItem("user", JSON.stringify(user));
-        toast.success("Account topped up successfully!");
-        window.dispatchEvent(new Event("storage"));
-        onSuccess();
+      const payload = res.data?.data ?? res.data;
+      const newBalance = payload?.newBalance;
+      if (res.data?.success !== false && newBalance !== undefined) {
+        const { useAuthStore } = await import("../../store/useAuthStore");
+        useAuthStore.getState().updateBalance(newBalance);
       }
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (newBalance !== undefined) user.balance = newBalance;
+      localStorage.setItem("user", JSON.stringify(user));
+      toast.success("Account topped up successfully!");
+      window.dispatchEvent(new Event("storage"));
+      onSuccess();
     } catch (err) {
       toast.error("Top-up failed. Please try again.");
     }

@@ -1,68 +1,132 @@
 import { useEffect, useState } from "react";
-import { Axios } from "../../config/axios";
-import type { IUser } from "../../types/type";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
-  Mail,
-  Shield,
-  Star,
   Crown,
   Edit3,
   Trash2,
-  X,
   Fingerprint,
-  ShieldAlert,
   Activity,
   Zap,
   Check,
 } from "lucide-react";
+import { useAdminStore } from "../../store/admin/useAdminStore";
+import { useAdminUIStore } from "../../store/admin/useAdminUIStore";
 
 export const Users = () => {
-  const [users, setUsers] = useState<IUser[]>([]);
-  const [editingUser, setEditingUser] = useState<IUser | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const fetchUsers = async () => {
-    try {
-      const res = await Axios.get("/admin/get-users");
-      const data = res.data.data || res.data;
-      if (Array.isArray(data)) setUsers(data);
-    } catch (err) {
-      console.error("Access Denied", err);
-    }
-  };
-
+  // Admin store selectors - using precise typing
+  const users = useAdminStore(state => state.users);
+  const usersLoading = useAdminStore(state => state.usersLoading);
+  const usersError = useAdminStore(state => state.usersError);
+  const selectedUser = useAdminStore(state => state.selectedUser);
+  const isUserEditModalOpen = useAdminStore(state => state.isUserEditModalOpen);
+  
+  // Admin store actions
+  const fetchUsers = useAdminStore(state => state.fetchUsers);
+  const updateUser = useAdminStore(state => state.updateUser);
+  const deleteUser = useAdminStore(state => state.deleteUser);
+  const setSelectedUser = useAdminStore(state => state.setSelectedUser);
+  const toggleUserEditModal = useAdminStore(state => state.toggleUserEditModal);
+  const clearUsersError = useAdminStore(state => state.clearUsersError);
+  
+  // Admin UI store selectors
+  const addNotification = useAdminUIStore(state => state.addNotification);
+  const setPageLoading = useAdminUIStore(state => state.setPageLoading);
+  
+  // Local state for form handling
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingRole, setEditingRole] = useState<'user' | 'admin'>('user');
+  // Fetch users on component mount with proper error handling
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const deleteUser = (id: string) => {
-    if (!window.confirm("Terminate personnel access?")) return;
-    Axios.delete(`/admin/user/${id}`)
-      .then(() => {
-        setUsers((prev) => prev.filter((u) => u._id !== id));
-      })
-      .catch((err) => console.error("Axios Error:", err.message));
-  };
-
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingUser) return;
-    try {
-      setLoading(true);
-      await Axios.put(`/admin/user/${editingUser._id}`, {
-        role: editingUser.role,
+    const loadUsers = async () => {
+      setPageLoading(true);
+      try {
+        await fetchUsers();
+      } catch (error) {
+        // Error is handled in the store, but we ensure page loading is turned off
+        console.error('Failed to load users:', error);
+      } finally {
+        setPageLoading(false);
+      }
+    };
+    
+    loadUsers();
+  }, [fetchUsers, setPageLoading]);
+  
+  // Handle error notifications with proper cleanup
+  useEffect(() => {
+    if (usersError) {
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: usersError,
       });
-      setUsers((prev) =>
-        prev.map((u) => (u._id === editingUser._id ? editingUser : u)),
-      );
-      setEditingUser(null);
-    } catch (err) {
-      console.error("Update failed", err);
-    } finally {
-      setLoading(false);
+      clearUsersError();
     }
+  }, [usersError, addNotification, clearUsersError]);
+  
+  // Handle user edit modal state
+  useEffect(() => {
+    if (selectedUser) {
+      setEditingRole(selectedUser.role);
+    }
+  }, [selectedUser]);
+  
+  // Handle user role update
+  const handleRoleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedUser) return;
+    
+    setIsSubmitting(true);
+    try {
+      await updateUser(selectedUser._id, { role: editingRole });
+      
+      addNotification({
+        type: 'success',
+        title: 'Success',
+        message: 'User role updated successfully',
+      });
+      
+      setSelectedUser(null);
+      toggleUserEditModal();
+    } catch (error) {
+      // Error is handled in the store and notification system
+      console.error('Failed to update user role:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Handle user deletion
+  const handleDeleteUser = async (userId: string) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    
+    try {
+      await deleteUser(userId);
+      
+      addNotification({
+        type: 'success',
+        title: 'Success',
+        message: 'User deleted successfully',
+      });
+    } catch (error) {
+      // Error is handled in the store and notification system
+      console.error('Failed to delete user:', error);
+    }
+  };
+  
+  // Handle user edit
+  const handleEditUser = (user: any) => {
+    setSelectedUser(user);
+    setEditingRole(user.role);
+    toggleUserEditModal();
+  };
+  
+  // Handle modal close
+  const handleCloseModal = () => {
+    setSelectedUser(null);
+    toggleUserEditModal();
   };
 
   return (
@@ -91,8 +155,14 @@ export const Users = () => {
 
         {/* --- REGISTRY LIST --- */}
         <div className="space-y-3">
-          <AnimatePresence mode="popLayout">
-            {users.map((user) => (
+          {usersLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Activity className="animate-spin text-red-600" size={24} />
+              <span className="ml-2 text-slate-400">Loading users...</span>
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {users.map((user) => (
               <motion.div
                 key={user._id}
                 layout
@@ -127,13 +197,13 @@ export const Users = () => {
 
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setEditingUser(user)}
+                        onClick={() => handleEditUser(user)}
                         className="p-3.5 bg-slate-50 dark:bg-white/5 rounded-full hover:bg-red-600 hover:text-white transition-all"
                       >
                         <Edit3 size={18} />
                       </button>
                       <button
-                        onClick={() => deleteUser(user._id)}
+                        onClick={() => handleDeleteUser(user._id)}
                         className="p-3.5 bg-red-600/5 text-red-600 rounded-full hover:bg-red-600 hover:text-white transition-all"
                       >
                         <Trash2 size={18} />
@@ -143,19 +213,20 @@ export const Users = () => {
                 </div>
               </motion.div>
             ))}
-          </AnimatePresence>
+            </AnimatePresence>
+          )}
         </div>
       </div>
 
       {/* --- MODAL WITH BOUNCY ANIMATION --- */}
       <AnimatePresence>
-        {editingUser && (
+        {isUserEditModalOpen && selectedUser && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setEditingUser(null)}
+              onClick={handleCloseModal}
               className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
             />
 
@@ -174,20 +245,20 @@ export const Users = () => {
                   Role <span className="text-red-600">Access</span>
                 </h2>
                 <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">
-                  {editingUser.name}
+                  {selectedUser.name}
                 </p>
               </div>
 
-              <form onSubmit={handleUpdate} className="space-y-6">
+              <form onSubmit={handleRoleUpdate} className="space-y-6">
                 {/* ROLE TOGGLE WITH SLIDING ANIMATION */}
                 <div className="relative p-1.5 bg-slate-100 dark:bg-black rounded-[25px] flex gap-1 border border-slate-200 dark:border-white/5">
                   {["user", "admin"].map((role) => {
-                    const isActive = editingUser.role === role;
+                    const isActive = editingRole === role;
                     return (
                       <button
                         key={role}
                         type="button"
-                        onClick={() => setEditingUser({ ...editingUser, role })}
+                        onClick={() => setEditingRole(role as 'user' | 'admin')}
                         className={`relative flex-1 py-3 text-[11px] font-black uppercase tracking-[0.1em] transition-colors duration-500 z-10 ${
                           isActive ? "text-red-600" : "text-slate-400"
                         }`}
@@ -213,10 +284,10 @@ export const Users = () => {
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={isSubmitting}
                   className="w-full py-5 bg-red-600 text-white rounded-[25px] font-black uppercase tracking-[0.2em] text-[10px] shadow-lg shadow-red-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
-                  {loading ? (
+                  {isSubmitting ? (
                     <Activity size={18} className="animate-spin" />
                   ) : (
                     "Commit Security Update"

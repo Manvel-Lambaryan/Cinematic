@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Axios } from "../../../config/axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
@@ -15,108 +14,61 @@ import {
 import { toast } from "react-hot-toast";
 import { CreditCardForm } from "../../components/CreditCardForm";
 import { useTranslation } from "react-i18next";
+import { useBookingStore } from "../../../store/useBookingStore";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 export const Booking = () => {
-  const { cinemaId, id } = useParams<{ cinemaId: string; id: string }>(); // id-ն այստեղ movieId-ն է
+  const { cinemaId, id } = useParams<{ cinemaId: string; id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const [cinema, setCinema] = useState<any>(null);
-  const [movie, setMovie] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
-  const [gridSize, setGridSize] = useState({ cols: 0, rows: 0 });
-  const [showTopUp, setShowTopUp] = useState(false);
+  // Booking store selectors
+  const cinema = useBookingStore(state => state.cinema);
+  const movie = useBookingStore(state => state.movie);
+  const selectedSeats = useBookingStore(state => state.selectedSeats);
+  const gridSize = useBookingStore(state => state.gridSize);
+  const loading = useBookingStore(state => state.loading);
+  const isProcessing = useBookingStore(state => state.isProcessing);
+  const showTopUp = useBookingStore(state => state.showTopUp);
+  const fetchCinemaData = useBookingStore(state => state.fetchCinemaData);
+  const fetchMovieData = useBookingStore(state => state.fetchMovieData);
+  const toggleSeat = useBookingStore(state => state.toggleSeat);
+  const confirmOrder = useBookingStore(state => state.confirmOrder);
+  const setShowTopUp = useBookingStore(state => state.setShowTopUp);
+  const calculateTotalPrice = useBookingStore(state => state.calculateTotalPrice);
+  
+  // Auth store
+  const user = useAuthStore(state => state.user);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        if (!cinemaId || !id || id === "undefined") return;
+    if (cinemaId && id && id !== "undefined") {
+      fetchCinemaData(cinemaId, id);
+      fetchMovieData(id);
+    }
+  }, [cinemaId, id, fetchCinemaData, fetchMovieData]);
 
-        // 🔥 ՈՒՇԱԴՐՈՒԹՅՈՒՆ: Ավելացվել է ?movieId=${id} query parameter-ը
-        const [cinemaRes, movieRes] = await Promise.all([
-          Axios.get(`/cinema/${cinemaId}?movieId=${id}`),
-          Axios.get(`/movie/${id}`),
-        ]);
 
-        const cinemaData = cinemaRes.data.data || cinemaRes.data;
-        setCinema(cinemaData);
-        setMovie(movieRes.data.data || movieRes.data);
-
-        if (cinemaData?.seats?.length > 0) {
-          const max_x = Math.max(...cinemaData.seats.map((s: any) => s.x));
-          const max_y = Math.max(...cinemaData.seats.map((s: any) => s.y));
-          setGridSize({ cols: max_x + 1, rows: max_y + 1 });
-        }
-      } catch (err) {
-        toast.error(t("failed_to_load_data"));
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [cinemaId, id, t]);
-
-  const toggleSeat = (seat: any) => {
-    // 🛡️ Strict Block: Եթե տեղը զբաղված է տվյալ ֆիլմի համար
-    if (seat.isBooked) return;
-
-    setSelectedSeats((prev) =>
-      prev.find((s) => s._id === seat._id)
-        ? prev.filter((s) => s._id !== seat._id)
-        : [...prev, seat],
-    );
-  };
-
-  const totalPrice = selectedSeats.reduce((acc, seat) => {
-    const basePrice = Number(movie?.price) || 0;
-    if (seat.types === "VIP") return acc + basePrice * 2.5;
-    if (seat.types === "MEDIUM") return acc + basePrice * 1.5;
-    return acc + basePrice;
-  }, 0);
+  const totalPrice = calculateTotalPrice();
 
   const handleConfirmOrder = async () => {
     if (selectedSeats.length === 0) return;
+    if (!user) {
+      toast.error(t("please_login_to_continue"));
+      return navigate("/login");
+    }
+    
+    if (user.balance < totalPrice) {
+      toast.error(t("insufficient_balance"));
+      setShowTopUp(true);
+      return;
+    }
+
     try {
-      const userStr = localStorage.getItem("user");
-      if (!userStr) {
-        toast.error(t("please_login_to_continue"));
-        return navigate("/login");
-      }
-      const user = JSON.parse(userStr);
-
-      if (user.balance < totalPrice) {
-        toast.error(t("insufficient_balance"));
-        setShowTopUp(true);
-        return;
-      }
-
-      setIsProcessing(true);
-
-      // 🔥 Backend-ին ուղարկում ենք նաև movieId-ն (id)
-      const response = await Axios.post("/payments/process", {
-        userId: user._id || user.id,
-        cinemaId: cinemaId,
-        movieId: id,
-        selectedSeats: selectedSeats,
-        totalPrice: totalPrice,
-      });
-
-      if (response.data.success) {
-        // Թարմացնում ենք բալանսը տեղում
-        user.balance -= totalPrice;
-        localStorage.setItem("user", JSON.stringify(user));
-        window.dispatchEvent(new Event("storage"));
-
-        toast.success(t("booking_successful"));
-        navigate("/profile/payments");
-      }
+      await confirmOrder(user._id || user.id, cinemaId!, id!);
+      toast.success(t("booking_successful"));
+      navigate("/profile/payments");
     } catch (error: any) {
       toast.error(error.response?.data?.message || t("payment_failed"));
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -169,7 +121,7 @@ export const Booking = () => {
         {/* SEATS GRID */}
 
         <div
-          className="bg-white/[0.01] p-12 rounded-[60px] border border-white/5 backdrop-blur-3xl mb-12 shadow-2xl overflow-auto max-w-full no-scrollbar"
+          className="bg-white/[0.01] p-12 rounded-[60px] border border-white/5 backdrop-blur-3xl mb-12 shadow-2xl overflow-x-auto max-w-full no-scrollbar"
           style={{
             display: "grid",
             gridTemplateColumns: `repeat(${gridSize.cols}, 55px)`,

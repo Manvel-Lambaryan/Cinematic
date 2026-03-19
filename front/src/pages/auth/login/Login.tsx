@@ -1,77 +1,48 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Ticket, ChevronRight, AlertCircle } from "lucide-react";
-import { Axios } from "../../../config/axios";
 import { GoogleLogin } from "@react-oauth/google";
 import { useTranslation } from "react-i18next";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 export const Login = () => {
   const { t } = useTranslation();
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [isLocked, setIsLocked] = useState<boolean>(false);
-
   const navigate = useNavigate();
+  
+  // Use Zustand store with selectors for performance
+  const login = useAuthStore(state => state.login);
+  const googleLogin = useAuthStore(state => state.googleLogin);
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const loading = useAuthStore(state => state.loading);
+  const error = useAuthStore(state => state.error);
+  const isLocked = useAuthStore(state => state.isLocked);
+  const clearError = useAuthStore(state => state.clearError);
+  
+  // Local form state (kept local as it's form-specific)
+  const [email, setEmail] = React.useState<string>("");
+  const [password, setPassword] = React.useState<string>("");
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
+    if (isAuthenticated) {
       navigate("/");
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   const cinemaBackground =
     "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070&auto=format&fit=crop";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLocked) return; // Արգելափակում ենք հարցումը, եթե լոկ է
-
-    setError("");
-    setLoading(true);
-    try {
-      const response = await Axios.post("/auth/login", { email, password });
-      localStorage.setItem("accessToken", response.data.accessToken);
-      window.location.href = "/";
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || t("invalid_credentials");
-      setError(errorMessage);
-
-      // Եթե սխալը պարունակում է "locked" կամ "blocked", նշանակում է 3 անգամ սխալվել է
-      if (
-        errorMessage.toLowerCase().includes("locked") ||
-        errorMessage.toLowerCase().includes("blocked")
-      ) {
-        setIsLocked(true);
-        // 3 րոպե հետո ավտոմատ բացել կոճակը Frontend-ում
-        setTimeout(() => setIsLocked(false), 180000);
-      }
-    } finally {
-      setLoading(false);
-    }
+    clearError();
+    await login(email, password);
+    // Navigation will be handled by useEffect based on isAuthenticated state
   };
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const res = await Axios.post("/auth/google-login", {
-        token: credentialResponse.credential,
-      });
-
-      if (res.data.accessToken) {
-        localStorage.setItem("accessToken", res.data.accessToken);
-        window.location.href = "/";
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || t("google_login_failed"));
-    } finally {
-      setLoading(false);
-    }
+    clearError();
+    await googleLogin(credentialResponse.credential);
+    // Navigation will be handled by useEffect based on isAuthenticated state
   };
 
   return (
@@ -189,7 +160,7 @@ export const Login = () => {
           <div className="flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => setError(t("google_login_failed"))}
+              onError={() => useAuthStore.getState().error = t("google_login_failed")}
               theme="filled_black"
               shape="pill"
               width="320"

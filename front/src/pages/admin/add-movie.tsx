@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Axios } from "../../config/axios";
 import {
   CloudArrowUpIcon,
   FilmIcon,
@@ -14,45 +13,32 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
+import { useAdminStore } from "../../store/useAdminStore";
 
 export const AddMovie = () => {
   const { t } = useTranslation();
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    genre: "",
-    rating: "",
-    cinemaId: "",
-    price: "",
-    releaseDate: "",
-    showTime: "",
-  });
-
-  const [cinemas, setCinemas] = useState<any[]>([]);
-  const [isCinemasLoading, setIsCinemasLoading] = useState(true);
+  
+  // Admin store selectors
+  const cinemas = useAdminStore(state => state.cinemas);
+  const isCinemasLoading = useAdminStore(state => state.isCinemasLoading);
+  const movieFormData = useAdminStore(state => state.movieFormData);
+  const isSubmitting = useAdminStore(state => state.isSubmitting);
+  const fetchCinemas = useAdminStore(state => state.fetchCinemas);
+  const setMovieFormData = useAdminStore(state => state.setMovieFormData);
+  const submitMovie = useAdminStore(state => state.submitMovie);
+  const clearError = useAdminStore(state => state.clearError);
+  
+  // Local file state (kept local as it's file-specific)
   const [previews, setPreviews] = useState({ poster: "", banner: "" });
   const [files, setFiles] = useState<{
     poster: File | null;
     banner: File | null;
     video: File | null;
   }>({ poster: null, banner: null, video: null });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const fetchCinemas = async () => {
-      setIsCinemasLoading(true);
-      try {
-        const res = await Axios.get("/cinema");
-        const actualData = res.data.data || res.data;
-        setCinemas(Array.isArray(actualData) ? actualData : []);
-      } catch (err) {
-        console.error(t("error_fetching_cinemas"), err);
-      } finally {
-        setIsCinemasLoading(false);
-      }
-    };
     fetchCinemas();
-  }, [t]);
+  }, [fetchCinemas]);
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -69,43 +55,8 @@ export const AddMovie = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.cinemaId || formData.cinemaId === "") {
-      return alert(t("please_select_cinema_hall"));
-    }
-
-    setIsSubmitting(true);
-    const data = new FormData();
-
-    data.append("title", formData.title);
-    data.append("description", formData.description);
-    data.append("genre", formData.genre);
-    data.append("rating", formData.rating || "0");
-    data.append("price", formData.price || "0");
-    data.append("cinema", formData.cinemaId);
-
-    const releaseDateTime = formData.releaseDate && formData.showTime 
-      ? new Date(`${formData.releaseDate}T${formData.showTime}`)
-      : new Date();
-    data.append("releaseDate", releaseDateTime.toISOString());
-    data.append("showTime", formData.showTime || "00:00");
-    data.append("duration", "120");
-
-    if (files.poster) data.append("posterUrl", files.poster);
-    if (files.banner) data.append("imageUrl", files.banner);
-    if (files.video) data.append("videoUrl", files.video);
-
-    try {
-      await Axios.post("/movie/add-movie", data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      alert(t("movie_published_success"));
-    } catch (err: any) {
-      console.error(t("upload_error"), err.response?.data || err);
-      alert(err.response?.data?.message || t("upload_failed_check_console"));
-    } finally {
-      setIsSubmitting(false);
-    }
+    clearError();
+    await submitMovie(files);
   };
 
   return (
@@ -153,7 +104,7 @@ export const AddMovie = () => {
                   placeholder={t("interstellar")}
                   icon={<FilmIcon className="w-5 h-5 text-red-600" />}
                   onChange={(val: string) =>
-                    setFormData({ ...formData, title: val })
+                    setMovieFormData({ title: val })
                   }
                 />
 
@@ -169,9 +120,9 @@ export const AddMovie = () => {
                         {t("assign_cinema_hall")}
                       </span>
                       <select
-                        value={formData.cinemaId}
+                        value={movieFormData.cinemaId}
                         onChange={(e) =>
-                          setFormData({ ...formData, cinemaId: e.target.value })
+                          setMovieFormData({ cinemaId: e.target.value })
                         }
                         className="bg-transparent outline-none text-lg font-bold text-zinc-900 dark:text-white appearance-none cursor-pointer w-full"
                         disabled={isCinemasLoading}
@@ -202,7 +153,7 @@ export const AddMovie = () => {
                     placeholder={t("scifi_adventure")}
                     icon={<TagIcon className="w-5 h-5 text-red-600" />}
                     onChange={(val: string) =>
-                      setFormData({ ...formData, genre: val })
+                      setMovieFormData({ ...movieFormData, genre: val })
                     }
                   />
                   <FloatingInput
@@ -211,7 +162,7 @@ export const AddMovie = () => {
                     type="number"
                     icon={<StarIcon className="w-5 h-5 text-red-600" />}
                     onChange={(val: string) =>
-                      setFormData({ ...formData, rating: val })
+                      setMovieFormData({ ...movieFormData, rating: val })
                     }
                   />
                   <FloatingInput
@@ -220,7 +171,7 @@ export const AddMovie = () => {
                     type="number"
                     icon={<TicketIcon className="w-5 h-5 text-red-600" />}
                     onChange={(val: string) =>
-                      setFormData({ ...formData, price: val })
+                      setMovieFormData({ ...movieFormData, price: val })
                     }
                   />
                 </div>
@@ -247,17 +198,17 @@ export const AddMovie = () => {
                         <div className="relative">
                           <input
                             type="date"
-                            value={formData.releaseDate}
+                            value={movieFormData.releaseDate}
                             onChange={(e) =>
-                              setFormData({ ...formData, releaseDate: e.target.value })
+                              setMovieFormData({ ...movieFormData, releaseDate: e.target.value })
                             }
                             className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                             min={new Date().toISOString().split('T')[0]}
                           />
-                          {formData.releaseDate && (
+                          {movieFormData.releaseDate && (
                             <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
                               <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                                🎬 {new Date(formData.releaseDate).toLocaleDateString('en-US', { 
+                                🎬 {new Date(movieFormData.releaseDate).toLocaleDateString('en-US', { 
                                   weekday: 'long', 
                                   month: 'long', 
                                   day: 'numeric' 
@@ -287,16 +238,16 @@ export const AddMovie = () => {
                         <div className="relative">
                           <input
                             type="time"
-                            value={formData.showTime}
+                            value={movieFormData.showTime}
                             onChange={(e) =>
-                              setFormData({ ...formData, showTime: e.target.value })
+                              setMovieFormData({ ...movieFormData, showTime: e.target.value })
                             }
                             className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                           />
-                          {formData.showTime && (
+                          {movieFormData.showTime && (
                             <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
                               <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                                🎭 {formData.showTime} • {parseInt(formData.showTime.split(':')[0]) < 12 ? 'Morning Show' : parseInt(formData.showTime.split(':')[0]) < 18 ? 'Matinee' : 'Evening Show'}
+                                🎭 {movieFormData.showTime} • {parseInt(movieFormData.showTime.split(':')[0]) < 12 ? 'Morning Show' : parseInt(movieFormData.showTime.split(':')[0]) < 18 ? 'Matinee' : 'Evening Show'}
                               </p>
                             </div>
                           )}
@@ -306,7 +257,7 @@ export const AddMovie = () => {
                   </div>
 
                   {/* Combined Schedule Display */}
-                  {formData.releaseDate && formData.showTime && (
+                  {movieFormData.releaseDate && movieFormData.showTime && (
                     <div className="relative">
                       <div className="absolute inset-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 rounded-2xl opacity-20 blur-xl" />
                       <div className="relative bg-white/90 dark:bg-black/90 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-8 shadow-2xl">
@@ -320,11 +271,11 @@ export const AddMovie = () => {
                             <div>
                               <h3 className="text-xl font-bold text-gray-900 dark:text-white">Scheduled Successfully!</h3>
                               <p className="text-gray-600 dark:text-gray-400">
-                                {new Date(formData.releaseDate).toLocaleDateString('en-US', { 
+                                {new Date(movieFormData.releaseDate).toLocaleDateString('en-US', { 
                                   weekday: 'short', 
                                   month: 'short', 
                                   day: 'numeric' 
-                                })} at {formData.showTime}
+                                })} at {movieFormData.showTime}
                               </p>
                             </div>
                           </div>
@@ -388,7 +339,7 @@ export const AddMovie = () => {
                   placeholder={t("movie_synopsis_placeholder")}
                   className="w-full bg-zinc-100 dark:bg-white/[0.02] border-2 border-zinc-200 dark:border-white/5 rounded-[40px] p-8 h-60 outline-none focus:border-red-600/40 transition-all text-lg leading-relaxed text-zinc-900 dark:text-white resize-none"
                   onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
+                    setMovieFormData({ ...movieFormData, description: e.target.value })
                   }
                 />
                 <DocumentTextIcon className="absolute right-8 top-8 w-6 h-6 text-zinc-300 dark:text-zinc-800 group-focus-within:text-red-600 transition-colors" />

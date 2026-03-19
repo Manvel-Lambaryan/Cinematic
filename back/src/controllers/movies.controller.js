@@ -41,10 +41,10 @@ const addMovie = asyncHandler(async (req, res) => {
     duration: duration || 120,
     price: price || 0,
     posterUrl: req.files["posterUrl"]
-      ? `/uploads/not/${req.files["posterUrl"][0].filename}`
+      ? `/uploads/${req.files["posterUrl"][0].filename}`
       : null,
     imageUrl: req.files["imageUrl"]
-      ? `/uploads/${req.files["imageUrl"][0].filename}`
+      ? `/uploads/not/${req.files["imageUrl"][0].filename}`
       : null,
     videoUrl: req.files["videoUrl"]
       ? `/uploads/videos/${req.files["videoUrl"][0].filename}`
@@ -105,10 +105,10 @@ const updateMovie = asyncHandler(async (req, res) => {
 
   if (req.files) {
     if (req.files["posterUrl"]) {
-      updates.posterUrl = `/uploads/not/${req.files["posterUrl"][0].filename}`;
+      updates.posterUrl = `/uploads/${req.files["posterUrl"][0].filename}`;
     }
     if (req.files["imageUrl"]) {
-      updates.imageUrl = `/uploads/${req.files["imageUrl"][0].filename}`;
+      updates.imageUrl = `/uploads/not/${req.files["imageUrl"][0].filename}`;
     }
     if (req.files["videoUrl"]) {
       updates.videoUrl = `/uploads/videos/${req.files["videoUrl"][0].filename}`;
