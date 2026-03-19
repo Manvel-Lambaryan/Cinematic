@@ -26,6 +26,7 @@ const MovieCard = memo(({ movie, onNavigate, getMovieTitle, getImageUrl }: {
       <OptimizedImage
         src={getImageUrl(movie.posterUrl || movie.imageUrl)}
         alt={movie.title}
+        aspectRatio={2 / 3}
         className="w-full h-full transition-transform duration-1000 group-hover:scale-110"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">

@@ -75,10 +75,10 @@ export const Movie = () => {
   if (!movie) return null;
 
   return (
-    <div className="h-screen w-full bg-white dark:bg-[#020617] text-zinc-900 dark:text-white relative overflow-hidden transition-colors duration-500">
+    <div className="h-full min-h-screen w-full bg-white dark:bg-[#020617] text-zinc-900 dark:text-white relative overflow-hidden transition-colors duration-500 rounded-[48px]">
 
-      {/* BACKGROUND */}
-      <div className="absolute inset-0 z-0">
+      {/* BACKGROUND — same curvature as container */}
+      <div className="absolute inset-0 z-0 rounded-[48px] overflow-hidden">
         <motion.img
           initial={{ scale: 1.2, opacity: 0 }}
           animate={{ scale: 1, opacity: 0.5 }}
@@ -87,8 +87,8 @@ export const Movie = () => {
           className="w-full h-full object-cover"
           alt="background"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-[#020617] dark:via-[#020617]/70 dark:to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent dark:from-[#020617] dark:via-transparent dark:to-transparent" />
+        <div className="absolute inset-0 rounded-[48px] bg-gradient-to-r from-white via-white/80 to-transparent dark:from-[#020617] dark:via-[#020617]/70 dark:to-transparent" />
+        <div className="absolute inset-0 rounded-[48px] bg-gradient-to-t from-white via-transparent to-transparent dark:from-[#020617] dark:via-transparent dark:to-transparent" />
       </div>
 
       {/* BACK BUTTON */}
@@ -114,7 +114,7 @@ export const Movie = () => {
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 1 }}
-            className="w-[220px] md:w-[320px] lg:w-[380px] shrink-0 aspect-[2/3] rounded-[40px] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.3)] border border-zinc-200 dark:border-white/10"
+            className="w-[220px] md:w-[320px] lg:w-[380px] shrink-0 aspect-[2/3] rounded-[48px] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.3)] border border-zinc-200 dark:border-white/10"
           >
             <motion.img
               animate={{ y: [0, -10, 0] }}
@@ -195,7 +195,7 @@ export const Movie = () => {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="relative w-full max-w-6xl aspect-video rounded-[30px] overflow-hidden border border-zinc-200 dark:border-white/10 shadow-2xl bg-black"
+              className="relative w-full max-w-6xl aspect-video rounded-[48px] overflow-hidden border border-zinc-200 dark:border-white/10 shadow-2xl bg-black"
             >
               <button onClick={() => setShowTrailer(false)} className="absolute top-6 right-6 z-50 p-3 bg-red-600 text-white rounded-full hover:scale-110 transition-all shadow-xl">
                 <X size={24} />

@@ -12,7 +12,7 @@ const MovieSkeleton = memo(() => (
 ));
 
 const HeroSkeleton = memo(() => (
-  <div className="h-[600px] min-h-[500px] relative rounded-[45px] overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-blue-950/20 shadow-2xl shrink-0 animate-pulse">
+  <div className="h-[600px] min-h-[500px] relative rounded-[48px] overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-blue-950/20 shadow-2xl shrink-0 animate-pulse">
     <div className="absolute inset-0 bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-blue-800/20 dark:to-blue-900/20" />
     <div className="absolute bottom-16 left-16 right-16">
       <div className="h-16 w-3/4 bg-zinc-300 dark:bg-blue-800/30 rounded-lg mb-8 animate-pulse" />
@@ -107,30 +107,32 @@ const InstantHome = memo(() => {
   // Instant UI rendering with skeleton fallbacks
   return (
     <div className="min-h-full w-full flex flex-col gap-10 pb-20 px-2 transition-colors duration-700 bg-white dark:bg-[var(--background)]">
-      {/* --- HERO SECTION --- */}
-      <section className="h-[600px] min-h-[500px] relative rounded-[45px] overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-blue-950/20 shadow-2xl shrink-0">
-        <AnimatePresence mode="wait">
-          {carouselData.hasData && carouselData.currentMovie ? (
-            <motion.img
-              key={carouselData.currentMovie._id}
-              src={getFullImageUrl(
-                carouselData.currentMovie.imageUrl?.includes("/not/")
-                  ? carouselData.currentMovie.imageUrl || ""
-                  : carouselData.currentMovie.imageUrl?.replace("/uploads/", "/uploads/not/") || "",
-              )}
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 1.5 }}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : (
-            <HeroSkeleton />
-          )}
-        </AnimatePresence>
+      {/* --- HERO SECTION (48px = same as layout main) --- */}
+      <section className="h-[600px] min-h-[500px] relative rounded-[48px] overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-blue-950/20 shadow-2xl shrink-0 isolate">
+        <div className="absolute inset-0 rounded-[48px] overflow-hidden">
+          <AnimatePresence mode="wait">
+            {carouselData.hasData && carouselData.currentMovie ? (
+              <motion.img
+                key={carouselData.currentMovie._id}
+                src={getFullImageUrl(
+                  carouselData.currentMovie.imageUrl?.includes("/not/")
+                    ? carouselData.currentMovie.imageUrl || ""
+                    : carouselData.currentMovie.imageUrl?.replace("/uploads/", "/uploads/not/") || "",
+                )}
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+                transition={{ duration: 1.5 }}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <HeroSkeleton />
+            )}
+          </AnimatePresence>
+        </div>
 
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent dark:from-[var(--background)] dark:via-transparent dark:to-transparent z-10 transition-colors duration-700" />
-        <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent dark:from-black/40 dark:via-transparent dark:to-transparent z-10" />
+        <div className="absolute inset-0 rounded-[48px] bg-gradient-to-t from-white via-transparent to-transparent dark:from-[var(--background)] dark:via-transparent dark:to-transparent z-10 transition-colors duration-700 pointer-events-none" />
+        <div className="absolute inset-0 rounded-[48px] bg-gradient-to-r from-white/20 via-transparent to-transparent dark:from-black/40 dark:via-transparent dark:to-transparent z-10 pointer-events-none" />
 
         <div className="absolute inset-0 p-16 flex flex-col justify-end z-20">
           <AnimatePresence mode="wait">

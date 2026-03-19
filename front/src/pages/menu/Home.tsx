@@ -47,32 +47,35 @@ const Home = memo(() => {
 
   return (
     <div className="min-h-full w-full flex flex-col gap-10 pb-20 px-2 transition-colors duration-700 bg-white dark:bg-[var(--background)]">
-      {/* --- HERO SECTION --- */}
-      <section className="h-[600px] min-h-[500px] relative rounded-[45px] overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-blue-950/20 shadow-2xl shrink-0">
-        <AnimatePresence mode="wait">
-          {heroMovies.length > 0 ? (
-            <motion.img
-              key={currentHeroMovie?._id}
-              src={getFullImageUrl(
-                currentHeroMovie.imageUrl?.includes("/not/")
-                  ? currentHeroMovie.imageUrl || ""
-                  : currentHeroMovie.imageUrl?.replace("/uploads/", "/uploads/not/") || "",
-              )}
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 1.5 }}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-zinc-300 dark:text-white/5 uppercase font-black italic tracking-widest text-4xl">
-              No Banner
-            </div>
-          )}
-        </AnimatePresence>
+      {/* --- HERO SECTION (48px radius = same as layout main) --- */}
+      <section className="h-[600px] min-h-[500px] relative rounded-[48px] overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-blue-950/20 shadow-2xl shrink-0 isolate">
+        {/* Image clipped by inner wrapper so corners match container exactly */}
+        <div className="absolute inset-0 rounded-[48px] overflow-hidden">
+          <AnimatePresence mode="wait">
+            {heroMovies.length > 0 ? (
+              <motion.img
+                key={currentHeroMovie?._id}
+                src={getFullImageUrl(
+                  currentHeroMovie.imageUrl?.includes("/not/")
+                    ? currentHeroMovie.imageUrl || ""
+                    : currentHeroMovie.imageUrl?.replace("/uploads/", "/uploads/not/") || "",
+                )}
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+                transition={{ duration: 1.5 }}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-zinc-300 dark:text-white/5 uppercase font-black italic tracking-widest text-4xl">
+                No Banner
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
 
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent dark:from-[var(--background)] dark:via-transparent dark:to-transparent z-10 transition-colors duration-700" />
-        <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent dark:from-black/40 dark:via-transparent dark:to-transparent z-10" />
+        <div className="absolute inset-0 rounded-[48px] bg-gradient-to-t from-white via-transparent to-transparent dark:from-[var(--background)] dark:via-transparent dark:to-transparent z-10 transition-colors duration-700 pointer-events-none" />
+        <div className="absolute inset-0 rounded-[48px] bg-gradient-to-r from-white/20 via-transparent to-transparent dark:from-black/40 dark:via-transparent dark:to-transparent z-10 pointer-events-none" />
 
         <div className="absolute inset-0 p-16 flex flex-col justify-end z-20">
           <AnimatePresence mode="wait">
@@ -153,6 +156,7 @@ const Home = memo(() => {
                   <OptimizedImage
                     src={getFullImageUrl(movie.posterUrl?.replace("/not/", "/") || "")}
                     alt={movie.title}
+                    aspectRatio={2 / 3}
                     className="w-full h-full transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex flex-col justify-end p-6 text-left">

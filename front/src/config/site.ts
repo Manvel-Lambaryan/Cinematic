@@ -5,8 +5,8 @@ export const siteConfig = {
   name: "CINEMATIC",
   tagline: "Your cinema experience",
   logo: "/logo.png",
-  email: "contact@cinematic.am",
-  phone: "+374 00 000 000",
+  email: "manwellllamabryaniii@gmail.com",
+  phone: "+374 91 552 267",
   address: "Yerevan, Armenia",
   social: {
     facebook: "https://facebook.com",

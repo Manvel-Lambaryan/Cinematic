@@ -11,7 +11,9 @@ interface OptimizedImageProps {
   className?: string;
   width?: number;
   height?: number;
-  priority?: boolean; // For above-the-fold images
+  /** Aspect ratio (e.g. 2/3 for posters) to avoid layout shift when width/height not set */
+  aspectRatio?: number;
+  priority?: boolean;
   placeholder?: string;
   onLoad?: () => void;
   onError?: () => void;
@@ -23,11 +25,19 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   className,
   width,
   height,
+  aspectRatio,
   priority = false,
   placeholder = '/images/placeholder.jpg',
   onLoad,
   onError,
 }) => {
+  const hasDimensions = typeof width === 'number' && typeof height === 'number' && width > 0 && height > 0;
+  const containerStyle: React.CSSProperties = {};
+  if (typeof width === 'number' && width > 0) containerStyle.width = width;
+  if (typeof height === 'number' && height > 0) containerStyle.height = height;
+  if (typeof aspectRatio === 'number' && aspectRatio > 0 && !hasDimensions) {
+    containerStyle.aspectRatio = String(aspectRatio);
+  }
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
   const [hasError, setHasError] = useState(false);
@@ -88,7 +98,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         'relative overflow-hidden bg-gray-200 dark:bg-gray-800',
         className
       )}
-      style={{ width, height }}
+      style={Object.keys(containerStyle).length > 0 ? containerStyle : undefined}
     >
       {/* Low-quality placeholder */}
       {!isLoaded && !hasError && (
@@ -113,8 +123,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
           srcSet={hasError ? '' : generateSrcSet(src)}
           sizes={generateSizes()}
           alt={alt}
-          width={width}
-          height={height}
+          {...(hasDimensions ? { width, height } : {})}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
           onLoad={handleLoad}
