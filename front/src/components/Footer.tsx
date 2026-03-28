@@ -18,7 +18,7 @@ export const Footer = () => {
               <img
                 src={siteConfig.logo}
                 alt={siteConfig.name}
-                className="h-12 w-auto object-contain"
+                className="h-16 md:h-20 lg:h-24 w-auto object-contain"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                   e.currentTarget.nextElementSibling?.classList.remove("hidden");

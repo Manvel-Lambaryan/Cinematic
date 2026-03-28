@@ -1,0 +1,29 @@
+* text=auto
+
+# Keep source and config files on LF across platforms.
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.env text eol=lf
+*.sh text eol=lf
+
+# Common Windows scripts can stay CRLF-friendly.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets should never be normalized.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.svg binary
+*.mp4 binary
