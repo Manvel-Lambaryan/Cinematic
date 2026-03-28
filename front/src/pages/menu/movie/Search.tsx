@@ -2,11 +2,13 @@ import { useEffect } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useSearchStore } from "../../../store/useSearchStore";
 import { useMovieStore } from "../../../store/useMovieStore";
 
 export const Search = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const query = useSearchStore((state) => state.query);
   const results = useSearchStore((state) => state.results);
@@ -42,7 +44,7 @@ export const Search = () => {
           autoComplete="off"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search movies..."
+          placeholder={t("search_movies_placeholder", { defaultValue: "Search movies..." })}
           className="flex-1 min-w-0 bg-transparent border-0 py-3 pl-12 pr-4 text-xs focus:outline-none focus:ring-0 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
         />
       </div>
@@ -62,7 +64,7 @@ export const Search = () => {
               <div className="p-4 text-center text-[11px] text-red-500">{error}</div>
             )}
             {!isSearching && !error && results.length === 0 && (
-              <div className="p-4 text-center text-[11px] text-zinc-500">No matches</div>
+              <div className="p-4 text-center text-[11px] text-zinc-500">{t("no_matches", { defaultValue: "No matches" })}</div>
             )}
             {!isSearching &&
               !error &&

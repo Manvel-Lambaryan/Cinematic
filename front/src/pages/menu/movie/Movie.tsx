@@ -9,7 +9,7 @@ import { useMovieTranslation } from "../../../hooks/useMovieTranslation";
 export const Movie = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getMovieTitle, t } = useMovieTranslation();
+  const { getMovieTitle, getMovieDesc, t } = useMovieTranslation();
 
   const [movie, setMovie] = useState<IMovie | null>(null);
   const [loading, setLoading] = useState(true);
@@ -154,7 +154,7 @@ export const Movie = () => {
               variants={itemVariants}
               className="text-sm md:text-base lg:text-lg text-zinc-600 dark:text-white/60 leading-relaxed mb-10 font-medium italic border-l-4 border-red-600 pl-6 max-w-xl"
             >
-              {movie.description}
+              {getMovieDesc(movie.title, movie.description)}
             </motion.p>
 
             <motion.div variants={itemVariants} className="flex flex-wrap justify-center md:justify-start gap-4">
@@ -168,7 +168,7 @@ export const Movie = () => {
                 }}
                 className="bg-red-600 hover:bg-zinc-900 dark:hover:bg-white dark:hover:text-black text-white px-10 py-4 rounded-full font-black uppercase tracking-widest text-[11px] transition-all duration-500 flex items-center gap-3 shadow-xl shadow-red-600/30"
               >
-                <Play size={18} fill="currentColor" /> {t("play_trailer")}
+                <Play size={18} fill="currentColor" /> {t("play_trailer", { defaultValue: "Play Trailer" })}
               </motion.button>
 
               <motion.button
@@ -177,7 +177,7 @@ export const Movie = () => {
                 onClick={() => navigate(`/cinema/${movie.cinema}/${movie._id || id}`)}
                 className="bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-10 py-4 rounded-full font-black uppercase tracking-widest text-[11px] transition-all duration-300 text-zinc-900 dark:text-white group/btn"
               >
-                {t("reserve_seat")}
+                {t("reserve_seat", { defaultValue: "Reserve Seat" })}
                 <ArrowRight size={18} className="ml-2 inline text-red-600 group-hover/btn:text-white transition-colors" />
               </motion.button>
             </motion.div>

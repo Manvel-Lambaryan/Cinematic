@@ -12,8 +12,6 @@ Axios.interceptors.request.use((config) => {
   const token = localStorage.getItem("accessToken");
   let lang = i18n.language || localStorage.getItem("i18nextLng") || "en";
 
-  if (lang === "hy") lang = "am";
-
   config.params = {
     ...config.params,
     lang: lang,

@@ -48,7 +48,11 @@ export const CinemaLayout = () => {
   // Initialize stores
   useStoreInitialization();
 
-  const changeLanguage = (lng: string) => setLanguage(lng as 'am' | 'en' | 'ru');
+  const changeLanguage = (lng: string) => {
+    const nextLanguage = lng as 'am' | 'en' | 'ru';
+    setLanguage(nextLanguage);
+    void i18n.changeLanguage(nextLanguage);
+  };
 
   // Computed values
   const userName = user?.name || "Guest";
@@ -235,7 +239,7 @@ export const CinemaLayout = () => {
             <TopNavLink
               to="/calendar"
               icon={<CalendarIcon className="w-6 h-6" />}
-              label="Schedule"
+              label={t("schedule", { defaultValue: "Schedule" })}
               active={location.pathname === "/calendar"}
             />
             <TopNavLink

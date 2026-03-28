@@ -184,9 +184,8 @@ const InstantHome = memo(() => {
           {[1, 2].map((i) => (
             <div key={i} className="flex items-center gap-20">
               <span className="text-4xl md:text-5xl font-black uppercase italic text-zinc-400 dark:text-white/80">
-                Cinema<span className="text-red-600">TIC</span> â€¢ New{" "}
-                <span className="text-red-600">Releases</span> â€¢ Trending{" "}
-                <span className="text-red-600">Now</span> â€¢
+                Cinema<span className="text-red-600">TIC</span> • {t("new_releases", { defaultValue: "New Releases" })} •{" "}
+                {t("trending", { defaultValue: "Trending" })} <span className="text-red-600">{t("now", { defaultValue: "Now" })}</span> •
               </span>
             </div>
           ))}
